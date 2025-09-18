@@ -1,7 +1,7 @@
 import multi from '@rollup/plugin-multi-entry';
 
 export default {
-	input: 'build/unbundeled/**/*.js',
+	input: 'build/unbundled/**/*.js',
 	plugins: [multi({exports : false})],
 	output: {
 		file: 'build/bundle.js',

@@ -71,3 +71,8 @@ input:focus-visible{
 .Error{
 	color: red;
 }
+
+.IndexEndTerm{
+	position: relative;
+	top: -5px;
+}

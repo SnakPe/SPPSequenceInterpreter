@@ -511,6 +511,7 @@ function printExpressionAsMathML(ex) {
             }
             case "SigmaAddition": {
                 const indexEndTermML = helper(ex.indexEndTerm);
+                indexEndTermML.classList.add("IndexEndTerm");
                 const indexVarML = document.createElementNS("http://www.w3.org/1998/Math/MathML", "mi");
                 indexVarML.innerHTML = "i";
                 const indexStartTermML = helper(ex.indexStartTerm);
