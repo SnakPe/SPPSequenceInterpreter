@@ -2,3 +2,4 @@
 /node_modules
 /build/unbundled
 /.gitignore
+/package-lock.json

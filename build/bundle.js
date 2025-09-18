@@ -396,6 +396,18 @@ const removeOuterBracketsIfExistMathML = (ml) => {
         ml.removeChild(last);
     }
 };
+function collectSubExpressions(ex) {
+    const result = [];
+    const stack = [ex.right, ex.left];
+    while (stack.length > 0) {
+        const nextElement = stack.pop();
+        if (nextElement.type === ex.type)
+            stack.push(nextElement.right, nextElement.left);
+        else
+            result.push(nextElement);
+    }
+    return result;
+}
 function printSequenceExpression(seqEx) {
     const stringBuilder = [];
     for (const e of seqEx) {
@@ -458,16 +470,6 @@ function printExpressionAsMathML(ex) {
             combinedML.append(rightBracketML);
             return combinedML;
         };
-        function collectSubExpressions(ex) {
-            const result = [ex.right];
-            let left = ex.left;
-            while (left.type === ex.type) {
-                result.unshift(left.right);
-                left = left.left;
-            }
-            result.unshift(left);
-            return result;
-        }
         switch (ex.type) {
             case "Variable": {
                 const varML = document.createElementNS("http://www.w3.org/1998/Math/MathML", "mi");
@@ -578,21 +580,24 @@ function interpretSeqEx(seqEx, base = 10) {
     function addIfExists(original, toAdd) {
         return original === undefined ? toAdd : new Add$2(original, toAdd);
     }
+    function addIfExistsReversed(original, toAdd) {
+        return original === undefined ? toAdd : new Add$2(toAdd, original);
+    }
     const digitsToNumber = (d) => d.reduce((prev, curr) => 10 * prev + curr, 0);
     for (const e of seqEx.left.slice().reverse()) {
         switch (e.type) {
             case "Digits": {
                 const cum = new Mult$2(new Const$2(digitsToNumber(e.digits)), new Exp$2(new Const$2(base), cummulativeReqEx ?? new Const$2(0)));
-                cummulativeReqEx = addIfExists(cummulativeReqEx, new Const$2(e.digits.length - 1));
-                result = addIfExists(result, cum);
+                cummulativeReqEx = addIfExistsReversed(cummulativeReqEx, new Const$2(e.digits.length));
+                result = addIfExistsReversed(result, cum);
                 break;
             }
             case "Repeater": {
-                // cummulativeReqEx = addIfExists<RepeaterExpression|undefined>(cummulativeReqEx,new Const(e.repeatee.length-1))
-                result = addIfExists(result, new SigmaSum$1(new Const$2(1), e.repeatExpression, new Mult$2(new Const$2(digitsToNumber(e.repeatee)), new Mult$2(new Exp$2(new Const$2(base), cummulativeReqEx ?? new Const$2(0)), new Exp$2(new Const$2(base), new Mult$2(new Const$2(e.repeatee.length), new Var$2("i")))))
+                // cummulativeReqEx = addIfExistsReversed<RepeaterExpression|undefined>(cummulativeReqEx,new Const(e.repeatee.length-1))
+                result = addIfExistsReversed(result, new SigmaSum$1(new Const$2(1), e.repeatExpression, new Mult$2(new Const$2(digitsToNumber(e.repeatee)), new Mult$2(new Exp$2(new Const$2(base), cummulativeReqEx ?? new Const$2(0)), new Exp$2(new Const$2(base), new Mult$2(new Const$2(e.repeatee.length), new Var$2("i")))))
                 //Sum((digits)*(10^expr*10^i))
                 ));
-                cummulativeReqEx = addIfExists(cummulativeReqEx, new Mult$2(new Const$2(e.repeatee.length), e.repeatExpression));
+                cummulativeReqEx = addIfExistsReversed(cummulativeReqEx, new Mult$2(new Const$2(e.repeatee.length), e.repeatExpression));
                 break;
             }
         }

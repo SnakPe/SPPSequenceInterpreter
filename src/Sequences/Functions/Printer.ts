@@ -14,6 +14,18 @@ const removeOuterBracketsIfExistMathML = (ml : MathMLElement) => {
 		ml.removeChild(last)
 	}
 }
+function collectSubExpressions(ex : BinaryExpression) : [Expression, ...Expression[]]{
+	const result : Expression[] = []
+	const stack = [ex.right, ex.left]
+	while(stack.length > 0){
+		const nextElement = stack.pop()!
+		if(nextElement.type === ex.type)
+			stack.push(nextElement.right,nextElement.left)
+		else 
+			result.push(nextElement)
+	}
+	return result as [Expression, ...Expression[]]
+}
 export function printSequenceExpression(seqEx : SequenceExpression) : string{
 	const stringBuilder : string[] = []
 	for(const e of seqEx){
@@ -82,16 +94,7 @@ export function printExpressionAsMathML(ex : Expression) : MathMLElement {
 			combinedML.append(rightBracketML)
 			return combinedML
 		}
-		function collectSubExpressions(ex : BinaryExpression) : [Expression, ...Expression[]]{
-			const result : [Expression, ...Expression[]] = [ex.right]
-			let left = ex.left
-			while(left.type === ex.type){
-				result.unshift(left.right)
-				left = left.left
-			}
-			result.unshift(left)
-			return result
-		}
+		
 		switch(ex.type){
 			case "Variable":{
 				const varML = document.createElementNS("http://www.w3.org/1998/Math/MathML","mi")

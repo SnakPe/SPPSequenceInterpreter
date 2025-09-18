@@ -9,24 +9,27 @@ export function interpretSeqEx(seqEx : SequenceExpression, base : number = 10) :
 	function addIfExists<E extends Expression|undefined>(original : E, toAdd : Exclude<E,undefined>) : Add | Exclude<E,undefined>{
 		return original === undefined ? toAdd : new Add(original,toAdd)
 	}
+	function addIfExistsReversed<E extends Expression|undefined>(original : E, toAdd : Exclude<E,undefined>) : Add | Exclude<E,undefined>{
+		return original === undefined ? toAdd : new Add(toAdd,original)
+	}
 	const digitsToNumber = (d : Digits) => d.reduce<number>((prev, curr) => 10*prev+curr, 0) 
 	for(const e of seqEx.left.slice().reverse()){
 		switch(e.type){
 			case "Digits":{
 				const cum : Expression = new Mult(new Const(digitsToNumber(e.digits)),new Exp(new Const(base),cummulativeReqEx??new Const(0)))
-				cummulativeReqEx = addIfExists<RepeaterExpression|undefined>(cummulativeReqEx, new Const(e.digits.length-1))
-				result = addIfExists<Expression|undefined>(result, cum)
+				cummulativeReqEx = addIfExistsReversed<RepeaterExpression|undefined>(cummulativeReqEx, new Const(e.digits.length))
+				result = addIfExistsReversed<Expression|undefined>(result, cum)
 				break
 			}
 			case "Repeater":{
-				// cummulativeReqEx = addIfExists<RepeaterExpression|undefined>(cummulativeReqEx,new Const(e.repeatee.length-1))
-				result = addIfExists<Expression|undefined>(result, new SigmaSum(
+				// cummulativeReqEx = addIfExistsReversed<RepeaterExpression|undefined>(cummulativeReqEx,new Const(e.repeatee.length-1))
+				result = addIfExistsReversed<Expression|undefined>(result, new SigmaSum(
 					new Const(1),
 					e.repeatExpression,
 					new Mult(new Const(digitsToNumber(e.repeatee)), new Mult(new Exp(new Const(base),cummulativeReqEx ?? new Const(0)), new Exp(new Const(base), new Mult(new Const(e.repeatee.length), new Var("i")))))
 					//Sum((digits)*(10^expr*10^i))
 				))
-				cummulativeReqEx = addIfExists<RepeaterExpression|undefined>(cummulativeReqEx, new Mult(new Const(e.repeatee.length),e.repeatExpression))
+				cummulativeReqEx = addIfExistsReversed<RepeaterExpression|undefined>(cummulativeReqEx, new Mult(new Const(e.repeatee.length),e.repeatExpression))
 				break
 			}
 		}
