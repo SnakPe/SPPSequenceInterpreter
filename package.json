@@ -1,0 +1,22 @@
+{
+  "name": "sppsequenceinterpreter",
+  "version": "1.0.0",
+  "description": "An interperter for SequenceExpression, for the r/infinitenines subreddit",
+  "license": "MIT",
+  "author": "Snake",
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "watch" : "rollup --watch --config & tsc --watch",
+    "rwatch" : "rollup --watch --config",
+    "twatch": "tsc --watch",
+    "build": "tsc && rollup --config"
+  },
+  "devDependencies": {
+    "@rollup/plugin-multi-entry": "^6.0.1",
+    "rollup": "^4.50.1"
+  },
+  "dependencies": {
+    "mathjax": "^4.0.0"
+  }
+}

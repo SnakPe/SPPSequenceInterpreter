@@ -1,0 +1,73 @@
+
+:root{
+	--background : white;
+	--textColor : black;
+	--areaBackground : #e09f3e;
+	--border : #9e2a2b;
+	
+}
+@media (prefers-color-scheme: dark) {
+	:root {
+		--background : #00296b;
+		--textColor : white;
+		--areaBackground : #00509d;
+		--border : #fdc500;
+	}
+}
+
+
+body{
+	background: var(--background);
+}
+main{
+	font-family: Arial, sans-serif;
+	color: var(--textColor);
+
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	/* text-align: center; */
+
+	padding-top: 20px;
+
+	scrollbar-color: var(--border) var(--areaBackground);
+}
+main * {
+	color: inherit;
+	font-size: 2.5rem;
+}
+main > *{
+	width: 80%;
+	border-radius: 10px;
+	border-top: var(--border) 2px solid;
+	background-color: var(--areaBackground);
+	padding: 20px;
+	margin-bottom: 5px;
+	overflow-x: auto;
+}
+
+mrow{
+	display: math;
+}
+input, button{
+	/* border-radius: 10px; */
+	padding: 5px;
+	background: var(--areaBackground);
+	border: none;
+}	
+input:focus-visible{
+	outline: none;
+	
+}
+
+.inputBorder{
+	/* border-radius: 99px; */
+	padding: 2px;
+	background: radial-gradient(circle,transparent 50%, var(--border) 100%);
+	display: inline-block;
+}
+
+.Error{
+	color: red;
+}
