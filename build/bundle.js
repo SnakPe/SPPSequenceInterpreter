@@ -1,3 +1,24 @@
+function splitByFilter(arr, filter) {
+    return arr.reduce(([l1, l2], cur) => filter(cur) ? [l1.concat(cur), l2] : [l1, l2.concat(cur)], [[], []]);
+}
+
+let SequenceExpression$1 = class SequenceExpression {
+    left;
+    right;
+    constructor(left, right) {
+        this.left = left;
+        this.right = right;
+    }
+};
+;
+let Repeater$1 = class Repeater {
+    repeatee;
+    repeatExpression;
+    constructor(repeatee, repeatExpression) {
+        this.repeatee = repeatee;
+        this.repeatExpression = repeatExpression;
+    }
+};
 let Const$2 = class Const {
     value;
     type = "Constant";
@@ -12,13 +33,19 @@ let Var$2 = class Var {
         this.name = name;
     }
 };
-class Neg {
-    subExpression;
-    type = "Negation";
-    constructor(subExpression) {
-        this.subExpression = subExpression;
+let SigmaSum$1 = class SigmaSum {
+    indexVar;
+    indexStart;
+    indexEnd;
+    expr;
+    type = "SigmaAddition";
+    constructor(indexVar, indexStart, indexEnd, expr) {
+        this.indexVar = indexVar;
+        this.indexStart = indexStart;
+        this.indexEnd = indexEnd;
+        this.expr = expr;
     }
-}
+};
 let Add$2 = class Add {
     left;
     right;
@@ -38,33 +65,113 @@ let Sub$2 = class Sub {
     }
 };
 let Div$2 = class Div {
-    left;
-    right;
+    numerator;
+    denominator;
     type = "Division";
-    constructor(left, right) {
-        this.left = left;
-        this.right = right;
+    constructor(numerator, denominator) {
+        this.numerator = numerator;
+        this.denominator = denominator;
     }
 };
 let Mult$2 = class Mult {
-    left;
-    right;
+    numerator;
+    denominator;
     type = "Multiplication";
-    constructor(left, right) {
-        this.left = left;
-        this.right = right;
+    constructor(numerator, denominator) {
+        this.numerator = numerator;
+        this.denominator = denominator;
     }
 };
 let Exp$2 = class Exp {
-    left;
-    right;
+    base;
+    exponent;
     type = "Exponentiation";
-    constructor(left, right) {
-        this.left = left;
-        this.right = right;
+    constructor(base, exponent) {
+        this.base = base;
+        this.exponent = exponent;
     }
 };
-let SigmaSum$1 = class SigmaSum {
+
+let Const$1 = class Const {
+    value;
+    type = "Constant";
+    constructor(value) {
+        this.value = value;
+    }
+};
+let Var$1 = class Var {
+    name;
+    type = "Variable";
+    constructor(name) {
+        this.name = name;
+    }
+};
+class Neg {
+    subterm;
+    type = "Negation";
+    constructor(subterm) {
+        this.subterm = subterm;
+    }
+}
+function leftAssociativity(op) {
+    return {
+        left: (subterms) => subterms.length === 2 ? subterms[0] : op(...subterms.slice(0, -1)),
+        right: (subterms) => subterms.at(-1),
+    };
+}
+function rightAssociativity(op) {
+    return {
+        left: (subterms) => subterms.at(0),
+        right: (subterms) => subterms.length === 2 ? subterms[1] : op(...subterms.slice(1)),
+    };
+}
+class AbstractBinaryOperator {
+    subterms;
+    constructor(...subterms) {
+        if (subterms.length < 2)
+            throw Error("Binary operator needs at least two subterms");
+        this.subterms = subterms;
+    }
+    ass = rightAssociativity(this.thisConstructor);
+    get left() {
+        return this.ass.left(this.subterms);
+    }
+    get right() {
+        return this.ass.right(this.subterms);
+    }
+}
+let Add$1 = class Add extends AbstractBinaryOperator {
+    type = "Addition";
+    thisConstructor(...subs) {
+        return new Add(...subs);
+    }
+};
+let Sub$1 = class Sub extends AbstractBinaryOperator {
+    type = "Subtraction";
+    thisConstructor(...subs) {
+        return new Sub(...subs);
+    }
+    ass = leftAssociativity(this.thisConstructor);
+};
+let Div$1 = class Div extends AbstractBinaryOperator {
+    type = "Division";
+    thisConstructor(...subs) {
+        return new Div(...subs);
+    }
+};
+let Mult$1 = class Mult extends AbstractBinaryOperator {
+    type = "Multiplication";
+    thisConstructor(...subs) {
+        return new Mult(...subs);
+    }
+};
+let Exp$1 = class Exp extends AbstractBinaryOperator {
+    type = "Exponentiation";
+    thisConstructor(...subs) {
+        return new Exp(...subs);
+    }
+};
+class SigmaSum {
     indexStartTerm;
     indexEndTerm;
     sumTerm;
@@ -74,9 +181,9 @@ let SigmaSum$1 = class SigmaSum {
         this.indexEndTerm = indexEndTerm;
         this.sumTerm = sumTerm;
     }
-};
+}
 
-let SequenceExpression$1 = class SequenceExpression {
+class SequenceExpression {
     left;
     right;
     constructor(left, right) {
@@ -91,7 +198,7 @@ let SequenceExpression$1 = class SequenceExpression {
         for (const e of this.right)
             yield e;
     }
-};
+}
 ;
 class DigitSeq {
     digits;
@@ -100,7 +207,7 @@ class DigitSeq {
         this.digits = digits;
     }
 }
-let Repeater$1 = class Repeater {
+class Repeater {
     repeatee;
     repeatExpression;
     type = "Repeater";
@@ -108,7 +215,7 @@ let Repeater$1 = class Repeater {
         this.repeatee = repeatee;
         this.repeatExpression = repeatExpression;
     }
-};
+}
 
 // type SeqTokens = IntegerSeqTokens | DecimalSeqTokens
 // type IntegerSeqTokens = [...RepeatersOrDigits]
@@ -191,7 +298,7 @@ function readSeqEx(userInput) {
                             throw Error("Found number with multiple dots '.'");
                     }
                 }
-                return dotLocation === null ? result : result / (10 * (scannerCount - dotLocation));
+                return dotLocation === null || dotLocation === scannerCount ? result : result / (10 ** (scannerCount - dotLocation));
             }
             function scanVariable(currentChar) {
                 let result = currentChar;
@@ -276,16 +383,16 @@ function readSeqEx(userInput) {
             function repeaterExpression() {
                 return addition();
             }
-            function binaryOperationHelper(constructor, nextFunction, operator) {
+            function binaryOperationHelper(constructor, nextFunction, operatorToken) {
                 // const [constructor, nextFunction, textRepresentation] = subs
                 return () => {
-                    let left = nextFunction();
-                    while (!atEnd() && peekParse() === operator) {
+                    let subconcepts = [nextFunction()];
+                    while (!atEnd() && peekParse() === operatorToken) {
                         advanceParse();
                         const right = nextFunction();
-                        left = new constructor(left, right);
+                        subconcepts.push(right);
                     }
-                    return left;
+                    return subconcepts.length === 1 ? subconcepts[0] : new constructor(...subconcepts);
                 };
             }
             function primary() {
@@ -297,10 +404,10 @@ function readSeqEx(userInput) {
                     return expr;
                 }
                 else if (typeof tok === "number") {
-                    return new Const$2(tok);
+                    return new Const$1(tok);
                 }
                 else if (isVariable(tok)) {
-                    return new Var$2(tok);
+                    return new Var$1(tok);
                 }
                 else
                     throw new Error(`Found operator '${tok}' without left hand side`);
@@ -313,11 +420,11 @@ function readSeqEx(userInput) {
                 }
                 return primary();
             }
-            const exponentiation = binaryOperationHelper(Exp$2, negation, "^");
-            const multiplication = binaryOperationHelper(Mult$2, exponentiation, "*");
-            const division = binaryOperationHelper(Div$2, multiplication, "/");
-            const subtraction = binaryOperationHelper(Sub$2, division, "-");
-            const addition = binaryOperationHelper(Add$2, subtraction, "+");
+            const exponentiation = binaryOperationHelper(Exp$1, negation, "^");
+            const multiplication = binaryOperationHelper(Mult$1, exponentiation, "*");
+            const division = binaryOperationHelper(Div$1, multiplication, "/");
+            const subtraction = binaryOperationHelper(Sub$1, division, "-");
+            const addition = binaryOperationHelper(Add$1, subtraction, "+");
             const repEx = repeaterExpression();
             if (!atEnd())
                 throw Error(`Could not parse entire expression. '${tokens.slice(parserCount).map(t => t.toString()).reduce((old, cur) => old.concat(cur))}' left`);
@@ -339,13 +446,13 @@ function readSeqEx(userInput) {
             const right = [];
             let currentSide = left;
             const checkRepeater = (currentToken) => {
-                const nextToken = peekParse();
-                if (nextToken.tokenType === "RepeaterExpression") {
-                    currentSide.push(new Repeater$1(currentToken.token, parseRepeaterExpression(nextToken.token)));
+                if (atEnd() || peekParse().tokenType !== "RepeaterExpression")
+                    currentSide.push(new DigitSeq(currentToken.token));
+                else {
+                    const nextToken = peekParse();
+                    currentSide.push(new Repeater(currentToken.token, parseRepeaterExpression(nextToken.token)));
                     advanceParse();
                 }
-                else
-                    currentSide.push(new DigitSeq(currentToken.token));
             };
             while (!atEnd()) {
                 const token = advanceParse();
@@ -379,7 +486,7 @@ function readSeqEx(userInput) {
                     case ")": throw Error("Found closing bracket without opening bracket");
                 }
             }
-            return new SequenceExpression$1(left, right);
+            return new SequenceExpression(left, right);
         }
         return parseSequenceExpression(tokens);
     }
@@ -396,18 +503,6 @@ const removeOuterBracketsIfExistMathML = (ml) => {
         ml.removeChild(last);
     }
 };
-function collectSubExpressions(ex) {
-    const result = [];
-    const stack = [ex.right, ex.left];
-    while (stack.length > 0) {
-        const nextElement = stack.pop();
-        if (nextElement.type === ex.type)
-            stack.push(nextElement.right, nextElement.left);
-        else
-            result.push(nextElement);
-    }
-    return result;
-}
 function printSequenceExpression(seqEx) {
     const stringBuilder = [];
     for (const e of seqEx) {
@@ -433,7 +528,7 @@ function printExpressionAsString(repEx) {
         case "Constant":
             return repEx.value.toString();
         case "Negation":
-            return `-${printExpressionAsString(repEx.subExpression)}`;
+            return `-${printExpressionAsString(repEx.subterm)}`;
         case "Addition":
             return printBinOP(repEx.left, repEx.right, "+");
         case "Subtraction":
@@ -485,17 +580,26 @@ function printExpressionAsMathML(ex) {
                 const minusML = document.createElementNS("http://www.w3.org/1998/Math/MathML", "mo");
                 minusML.innerHTML = "-";
                 const negationML = document.createElementNS("http://www.w3.org/1998/Math/MathML", "mrow");
-                negationML.append(minusML, printExpressionAsMathML(ex.subExpression));
+                negationML.append(minusML);
+                if (ex.subterm.type === "Constant" || ex.subterm.type === "Variable")
+                    negationML.append(printExpressionAsMathML(ex.subterm));
+                else {
+                    const leftBracketML = document.createElementNS("http://www.w3.org/1998/Math/MathML", "mo");
+                    leftBracketML.innerHTML = "(";
+                    const rightBracketML = document.createElementNS("http://www.w3.org/1998/Math/MathML", "mo");
+                    rightBracketML.innerHTML = ")";
+                    negationML.append(leftBracketML, printExpressionAsMathML(ex.subterm), rightBracketML);
+                }
                 return negationML;
             }
             case "Addition": {
-                return printBinOP(collectSubExpressions(ex), "+");
+                return printBinOP(ex.subterms, "+");
             }
             case "Subtraction": {
-                return printBinOP(collectSubExpressions(ex), "-");
+                return printBinOP(ex.subterms, "-");
             }
             case "Multiplication": {
-                return printBinOP(collectSubExpressions(ex), "·");
+                return printBinOP(ex.subterms, "·");
             }
             case "Division": {
                 const leftML = helper(ex.left);
@@ -512,8 +616,9 @@ function printExpressionAsMathML(ex) {
                 return exponentiationML;
             }
             case "SigmaAddition": {
-                const indexEndTermML = helper(ex.indexEndTerm);
+                const indexEndTermML = document.createElementNS("http://www.w3.org/1998/Math/MathML", "mrow");
                 indexEndTermML.classList.add("IndexEndTerm");
+                indexEndTermML.append(helper(ex.indexEndTerm));
                 const indexVarML = document.createElementNS("http://www.w3.org/1998/Math/MathML", "mi");
                 indexVarML.innerHTML = "i";
                 const indexStartTermML = helper(ex.indexStartTerm);
@@ -526,8 +631,12 @@ function printExpressionAsMathML(ex) {
                 belowSigmaML.append(indexVarML, equalsML, indexStartTermML);
                 const sigmaSumLeftML = document.createElementNS("http://www.w3.org/1998/Math/MathML", "munderover");
                 sigmaSumLeftML.append(sigmaML, belowSigmaML, indexEndTermML);
+                const leftBracketML = document.createElementNS("http://www.w3.org/1998/Math/MathML", "mo");
+                leftBracketML.innerHTML = "(";
+                const rightBracketML = document.createElementNS("http://www.w3.org/1998/Math/MathML", "mo");
+                rightBracketML.innerHTML = ")";
                 const combinedML = document.createElementNS("http://www.w3.org/1998/Math/MathML", "mrow");
-                combinedML.append(sigmaSumLeftML, sumTermML);
+                combinedML.append(leftBracketML, sigmaSumLeftML, sumTermML, rightBracketML);
                 return combinedML;
             }
         }
@@ -578,26 +687,36 @@ function interpretSeqEx(seqEx, base = 10) {
     let cummulativeReqEx = undefined;
     let result = undefined;
     function addIfExists(original, toAdd) {
-        return original === undefined ? toAdd : new Add$2(original, toAdd);
+        if (original === undefined)
+            return toAdd;
+        if (original.type === "Addition")
+            return new Add$1(...original.subterms, toAdd);
+        return new Add$1(original, toAdd);
     }
     function addIfExistsReversed(original, toAdd) {
-        return original === undefined ? toAdd : new Add$2(toAdd, original);
+        if (original === undefined)
+            return toAdd;
+        if (original.type === "Addition")
+            return new Add$1(toAdd, ...original.subterms);
+        return new Add$1(toAdd, original);
     }
     const digitsToNumber = (d) => d.reduce((prev, curr) => 10 * prev + curr, 0);
     for (const e of seqEx.left.slice().reverse()) {
         switch (e.type) {
             case "Digits": {
-                const cum = new Mult$2(new Const$2(digitsToNumber(e.digits)), new Exp$2(new Const$2(base), cummulativeReqEx ?? new Const$2(0)));
-                cummulativeReqEx = addIfExistsReversed(cummulativeReqEx, new Const$2(e.digits.length));
-                result = addIfExistsReversed(result, cum);
+                const oldCum = new Mult$1(new Const$1(digitsToNumber(e.digits)), new Exp$1(new Const$1(base), cummulativeReqEx ?? new Const$1(0)));
+                cummulativeReqEx = addIfExistsReversed(cummulativeReqEx, new Const$1(e.digits.length));
+                result = addIfExistsReversed(result, oldCum);
                 break;
             }
             case "Repeater": {
                 // cummulativeReqEx = addIfExistsReversed<RepeaterExpression|undefined>(cummulativeReqEx,new Const(e.repeatee.length-1))
-                result = addIfExistsReversed(result, new SigmaSum$1(new Const$2(1), e.repeatExpression, new Mult$2(new Const$2(digitsToNumber(e.repeatee)), new Mult$2(new Exp$2(new Const$2(base), cummulativeReqEx ?? new Const$2(0)), new Exp$2(new Const$2(base), new Mult$2(new Const$2(e.repeatee.length), new Var$2("i")))))
-                //Sum((digits)*(10^expr*10^i))
-                ));
-                cummulativeReqEx = addIfExistsReversed(cummulativeReqEx, new Mult$2(new Const$2(e.repeatee.length), e.repeatExpression));
+                result = addIfExistsReversed(result, new SigmaSum(new Const$1(1), e.repeatExpression, 
+                //(digits)*(10^expr*10^(length*i-1))
+                new Mult$1(new Const$1(digitsToNumber(e.repeatee)), new Mult$1(new Exp$1(new Const$1(base), cummulativeReqEx ?? new Const$1(0)), //10^expr
+                new Exp$1(new Const$1(base), new Mult$1(new Const$1(e.repeatee.length), new Sub$1(new Var$1("i"), new Const$1(1)))) //10^(length*i-1)
+                ))));
+                cummulativeReqEx = addIfExistsReversed(cummulativeReqEx, new Mult$1(new Const$1(e.repeatee.length), e.repeatExpression));
                 break;
             }
         }
@@ -607,58 +726,61 @@ function interpretSeqEx(seqEx, base = 10) {
     for (const e of seqEx.right) {
         switch (e.type) {
             case "Digits": {
-                cummulativeReqEx = addIfExists(cummulativeReqEx, new Const$2(e.digits.length));
-                result = addIfExists(result, new Div$2(new Const$2(digitsToNumber(e.digits)), new Exp$2(new Const$2(base), cummulativeReqEx)));
+                cummulativeReqEx = addIfExists(cummulativeReqEx, new Const$1(e.digits.length));
+                result = addIfExists(result, new Div$1(new Const$1(digitsToNumber(e.digits)), new Exp$1(new Const$1(base), cummulativeReqEx)));
                 break;
             }
             case "Repeater": {
                 // cummulativeReqEx = addIfExists<RepeaterExpression|undefined>(cummulativeReqEx,new Const(e.repeatee.length-1))
-                result = addIfExists(result, new SigmaSum$1(new Const$2(1), e.repeatExpression, new Div$2(new Const$2(digitsToNumber(e.repeatee)), new Mult$2(new Exp$2(new Const$2(base), cummulativeReqEx ?? new Const$2(0)), new Exp$2(new Const$2(base), new Mult$2(new Const$2(e.repeatee.length), new Var$2("i")))))
-                //Sum((digits)/(10^expr*10^i))
-                ));
-                cummulativeReqEx = addIfExists(cummulativeReqEx, new Mult$2(new Const$2(e.repeatee.length), e.repeatExpression));
+                result = addIfExists(result, new SigmaSum(new Const$1(1), e.repeatExpression, 
+                //(digits)/(10^expr*10^(length*i))
+                new Div$1(new Const$1(digitsToNumber(e.repeatee)), new Mult$1(new Exp$1(new Const$1(base), cummulativeReqEx ?? new Const$1(0)), new Exp$1(new Const$1(base), new Mult$1(new Const$1(e.repeatee.length), new Var$1("i")))))));
+                cummulativeReqEx = addIfExists(cummulativeReqEx, new Mult$1(new Const$1(e.repeatee.length), e.repeatExpression));
                 break;
             }
         }
     }
-    if (result === undefined)
-        throw Error("Found empty Sequent");
+    if (result === undefined) {
+        //Empty sequent
+        return new Const$1(0);
+    }
     return result;
 }
 function assignValue(interpretation, expr) {
+    function binTypeToOperator(binType) {
+        return (acc, cur) => {
+            switch (binType) {
+                case "Addition":
+                    return acc + cur;
+                case "Subtraction":
+                    return acc - cur;
+                case "Multiplication":
+                    return acc * cur;
+                case "Division":
+                    return acc / cur;
+                case "Exponentiation":
+                    return acc ** cur;
+            }
+        };
+    }
     switch (expr.type) {
         case "Variable": {
             if (!interpretation.has(expr.name))
                 throw Error(`Found variable ${expr.name} in expression, but not in interpretation`);
             return interpretation.get(expr.name);
-            break;
         }
         case "Constant": {
             return expr.value;
-            break;
         }
         case "Negation": {
-            return -assignValue(interpretation, expr.subExpression);
+            return -assignValue(interpretation, expr.subterm);
         }
-        case "Addition": {
-            return assignValue(interpretation, expr.left) + assignValue(interpretation, expr.right);
-            break;
-        }
-        case "Subtraction": {
-            return assignValue(interpretation, expr.left) - assignValue(interpretation, expr.right);
-            break;
-        }
-        case "Multiplication": {
-            return assignValue(interpretation, expr.left) * assignValue(interpretation, expr.right);
-            break;
-        }
-        case "Division": {
-            return (assignValue(interpretation, expr.left) / assignValue(interpretation, expr.right));
-            break;
-        }
+        case "Addition":
+        case "Subtraction":
+        case "Multiplication":
+        case "Division":
         case "Exponentiation": {
-            return assignValue(interpretation, expr.left) ** assignValue(interpretation, expr.right);
-            break;
+            return expr.subterms.map(sub => assignValue(interpretation, sub)).reduce(binTypeToOperator(expr.type));
         }
         case "SigmaAddition": {
             let sum = 0;
@@ -675,11 +797,166 @@ function assignValue(interpretation, expr) {
     }
 }
 
+function collectVariablesFromExpression(exp) {
+    switch (exp.type) {
+        case "Variable":
+            return exp.name === "i" ? new Set() : new Set([exp.name]);
+        case "Constant":
+            return new Set();
+        case "Negation":
+            return collectVariablesFromExpression(exp.subterm);
+        case "Addition":
+        case "Multiplication":
+        case "Subtraction":
+        case "Division":
+        case "Exponentiation":
+            return exp.subterms.reduce((acc, cur) => acc.union(collectVariablesFromExpression(cur)), new Set())
+                .union(collectVariablesFromExpression(exp.right));
+        case "SigmaAddition":
+            return collectVariablesFromExpression(exp.indexEndTerm)
+                .union(collectVariablesFromExpression(exp.indexStartTerm))
+                .union(collectVariablesFromExpression(exp.sumTerm));
+    }
+}
+function collectVariables(seq) {
+    const variables = new Set();
+    for (const seqPart of seq) {
+        if (seqPart.type !== "Repeater")
+            continue;
+        variables.union(collectVariablesFromExpression(seqPart.repeatExpression));
+    }
+    return variables;
+}
+
+function simplifyExpression(ex) {
+    function associativeCommutativeBinHelper(ex) {
+        let neutralElement;
+        let AssBinOp;
+        let op;
+        switch (ex.type) {
+            case "Addition":
+                neutralElement = 0;
+                AssBinOp = Add$1;
+                op = (a, c) => a + c.value;
+                break;
+            case "Multiplication":
+                neutralElement = 1;
+                AssBinOp = Mult$1;
+                op = (a, c) => a * c.value;
+        }
+        const simplifiedSubterms = ex.subterms.map(subEx => simplifyExpression(subEx));
+        // const [constants,nonconstants] = simplifiedSubterms.reduce<[Const[],Expression[]]>(([consts,nonconsts], cur) => cur.type === "Constant" ? [consts.concat(cur),nonconsts] : [consts,nonconsts.concat(cur)],[[],[]])
+        const [constants, nonconstants] = splitByFilter(simplifiedSubterms, (sub) => sub.type === "Constant");
+        const constantPart = new Const$1(constants.reduce(op, neutralElement));
+        if (nonconstants.length === 0)
+            return constantPart;
+        if (constantPart.value === neutralElement) {
+            if (nonconstants.length === 1)
+                return nonconstants[0];
+            return new AssBinOp(...nonconstants);
+        }
+        if (ex.type === "Multiplication" && constantPart.value === 0) {
+            return constantPart;
+        }
+        return new AssBinOp(constantPart, ...nonconstants);
+    }
+    switch (ex.type) {
+        case "Constant":
+        case "Variable": {
+            return ex;
+        }
+        case "Negation": {
+            const sub = simplifyExpression(ex.subterm);
+            if (sub.type === "Constant")
+                return new Const$1(-sub.value);
+            if (sub.type === "Negation")
+                return sub.subterm;
+            return new Neg(sub);
+        }
+        case "Addition":
+        case "Multiplication":
+            return associativeCommutativeBinHelper(ex);
+        case "Subtraction": {
+            // const l = simplifyExpression(ex.left)
+            // const r = simplifyExpression(ex.right)
+            // if(l.type === "Constant" && r.type === "Constant") return new Const(l.value-r.value)
+            // if(l.type === "Constant" && l.value === 0) return new Neg(r)
+            // if(r.type === "Constant" && r.value === 0) return l
+            // if(r.type === "Negation") return new Add(l,r.subterm)
+            // return new Sub(l,r)
+            // a-b-...-z = a+(-b)+...+(-z)
+            const firstSub = simplifyExpression(ex.subterms[0]);
+            const [negatedConstants, negatedNonconstants] = splitByFilter(ex.subterms.slice(1).map(sub => simplifyExpression(new Neg(sub))), (t) => t.type === "Constant");
+            const constantPart = new Const$1(negatedConstants.reduce((acc, cur) => acc + cur.value, 0));
+            if (firstSub.type === "Constant")
+                constantPart.value += firstSub.value;
+            else
+                negatedNonconstants.push(firstSub);
+            if (negatedNonconstants.length === 0)
+                return constantPart;
+            if (constantPart.value === 0) {
+                if (negatedNonconstants.length === 1)
+                    return negatedNonconstants[0];
+                return new Add$1(...negatedNonconstants);
+            }
+            return new Add$1(constantPart, ...negatedNonconstants);
+        }
+        case "Division": {
+            const l = simplifyExpression(ex.left);
+            const r = simplifyExpression(ex.right);
+            if (l.type === "Constant" && r.type === "Constant")
+                return new Const$1(l.value / r.value);
+            if (l.type === "Constant" && l.value === 0)
+                return new Const$1(0);
+            if (r.type === "Constant" && r.value === 1)
+                return l;
+            return new Div$1(l, r);
+        }
+        case "Exponentiation": {
+            const l = simplifyExpression(ex.left);
+            const r = simplifyExpression(ex.right);
+            if (l.type === "Constant" && r.type === "Constant")
+                return new Const$1(l.value ** r.value);
+            if (l.type === "Constant" && l.value === 0)
+                return new Const$1(0);
+            if (r.type === "Constant" && r.value === 0)
+                return new Const$1(1);
+            if (r.type === "Constant" && r.value === 1)
+                return l;
+            if (l.type === "Constant" && l.value === 1)
+                return new Const$1(1);
+            return new Exp$1(l, r);
+        }
+        case "SigmaAddition": {
+            // the start term should always by Const(1). We simplify anyways...
+            const startTerm = simplifyExpression(ex.indexStartTerm);
+            const endTerm = simplifyExpression(ex.indexEndTerm);
+            const sumTerm = simplifyExpression(ex.sumTerm);
+            const varsInSumTerm = collectVariablesFromExpression(sumTerm);
+            if (startTerm.type !== "Constant" || endTerm.type !== "Constant" || (varsInSumTerm.size === 1 && !varsInSumTerm.has("i") || varsInSumTerm.size > 1))
+                return new SigmaSum(startTerm, endTerm, sumTerm);
+            let sum = 0;
+            for (let i = startTerm.value; i <= endTerm.value; i++)
+                sum += assignValue(new Map([["i", i]]), sumTerm);
+            return new Const$1(sum);
+        }
+    }
+}
+
+function createInputBorder() {
+    const b = document.createElement("div");
+    b.classList.add("inputBorder");
+    return b;
+}
 onload = () => {
     const sequenceInput = document.getElementById("SequenceInput");
-    const sequenceInputButton = document.getElementById("SequenceInputButton");
     const parserOutput = document.getElementById("ParserOutput");
     const sequenceOutput = document.getElementById("SequenceOutput");
+    const simplifierOutput = document.getElementById("SimplifierOutput");
+    const variableAssigner = document.getElementById("VariableAssigner");
+    const valueOutput = document.getElementById("ValueOutput");
+    /* INPUT HANDLING */
+    // Sequence Input
     function readUserInput(ev) {
         ev?.preventDefault();
         parserOutput.innerHTML = "";
@@ -699,105 +976,53 @@ onload = () => {
     }
     function showSequence(seqEx) {
         sequenceOutput.innerHTML = "";
-        sequenceOutput.append(printExpressionAsMathML(interpretSeqEx(seqEx)));
+        const seq = interpretSeqEx(seqEx);
+        sequenceOutput.append(printExpressionAsMathML(seq));
+        return seq;
     }
-    const handleInput = () => {
-        const seqEx = readUserInput();
-        if (seqEx !== undefined)
-            showSequence(seqEx);
+    function showSimplification(seq) {
+        simplifierOutput.innerHTML = "";
+        const simplifiedExpression = simplifyExpression(seq);
+        simplifierOutput.append(printExpressionAsMathML(simplifiedExpression));
+        return simplifiedExpression;
+    }
+    //Variable Assignment
+    const handleVarInput = (seq, varsToInputElems) => () => {
+        const interpretation = new Map(varsToInputElems.map(([val, elem]) => [val, elem.valueAsNumber]));
+        valueOutput.innerHTML = assignValue(interpretation, seq).toString();
     };
-    sequenceInput.onkeyup = handleInput;
-    handleInput();
-};
-
-class SequenceExpression {
-    left;
-    right;
-    constructor(left, right) {
-        this.left = left;
-        this.right = right;
-    }
-}
-;
-class Repeater {
-    repeatee;
-    repeatExpression;
-    constructor(repeatee, repeatExpression) {
-        this.repeatee = repeatee;
-        this.repeatExpression = repeatExpression;
-    }
-}
-let Const$1 = class Const {
-    value;
-    type = "Constant";
-    constructor(value) {
-        this.value = value;
-    }
-};
-let Var$1 = class Var {
-    name;
-    type = "Variable";
-    constructor(name) {
-        this.name = name;
-    }
-};
-class SigmaSum {
-    indexVar;
-    indexStart;
-    indexEnd;
-    expr;
-    type = "SigmaAddition";
-    constructor(indexVar, indexStart, indexEnd, expr) {
-        this.indexVar = indexVar;
-        this.indexStart = indexStart;
-        this.indexEnd = indexEnd;
-        this.expr = expr;
-    }
-}
-let Add$1 = class Add {
-    left;
-    right;
-    type = "Addition";
-    constructor(left, right) {
-        this.left = left;
-        this.right = right;
-    }
-};
-let Sub$1 = class Sub {
-    left;
-    right;
-    type = "Subtraction";
-    constructor(left, right) {
-        this.left = left;
-        this.right = right;
-    }
-};
-let Div$1 = class Div {
-    numerator;
-    denominator;
-    type = "Division";
-    constructor(numerator, denominator) {
-        this.numerator = numerator;
-        this.denominator = denominator;
-    }
-};
-let Mult$1 = class Mult {
-    numerator;
-    denominator;
-    type = "Multiplication";
-    constructor(numerator, denominator) {
-        this.numerator = numerator;
-        this.denominator = denominator;
-    }
-};
-let Exp$1 = class Exp {
-    base;
-    exponent;
-    type = "Exponentiation";
-    constructor(base, exponent) {
-        this.base = base;
-        this.exponent = exponent;
-    }
+    const createVariableAssignmentInput = (seq) => {
+        const variables = collectVariablesFromExpression(seq);
+        const varsToInputElems = [];
+        variableAssigner.innerHTML = "";
+        for (const variable of variables) {
+            const id = `VariableInput:${variable}`;
+            const varLabel = document.createElement("label");
+            varLabel.innerText = `${variable}:`;
+            varLabel.htmlFor = id;
+            const varInputBorder = createInputBorder();
+            const varInputField = document.createElement("input");
+            varInputField.id = id;
+            varInputField.type = "number";
+            varInputField.onchange = handleVarInput(seq, varsToInputElems);
+            varInputField.onkeyup = handleVarInput(seq, varsToInputElems);
+            varsToInputElems.push([variable, varInputField]);
+            varInputBorder.appendChild(varInputField);
+            const varInput = document.createElement("div");
+            varInput.append(varLabel, varInputBorder);
+            variableAssigner.append(varInput);
+        }
+    };
+    const handleSeqExInput = () => {
+        const seqEx = readUserInput();
+        if (seqEx === undefined)
+            return;
+        const seq = showSequence(seqEx);
+        showSimplification(seq);
+        createVariableAssignmentInput(seq);
+    };
+    sequenceInput.onkeyup = handleSeqExInput;
+    handleSeqExInput();
 };
 
 class Const {
