@@ -1,0 +1,12 @@
+math{
+	display : block;
+	math-style: normal;
+	font-size: medium;
+}
+math *{
+	font-size: 2rem;
+}
+
+.Error{
+	color: red;
+}

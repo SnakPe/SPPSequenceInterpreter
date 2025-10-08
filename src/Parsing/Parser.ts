@@ -1,4 +1,4 @@
-import { Const, Var, Sub, Exp, Mult, Div, Add, Neg } from "../Sequences/Expression.js"
+import { Const, Var, Sub, Exp, Mult, Div, Add, Neg, BinaryOperatorConstructor } from "../Sequences/Expression.js"
 import { RepeaterExpression } from "../Sequences/Repeater.js"
 import { SequenceExpression, Repeater, DigitSeq } from "../Sequences/Sequence.js"
 
@@ -20,11 +20,11 @@ type Token =
 	| {tokenType : "(", token : "("} 
 	| {tokenType : ")", token : ")"} 
 
-export type Operator = "+" | "-" | "*" | "/" | "^"
+export type OperatorToken = "+" | "-" | "*" | "/" | "^"
 type ExpressionToken =
 	| VariableText
 	| number
-	| Operator
+	| OperatorToken
 	| "("
 	| ")"
 
@@ -127,7 +127,7 @@ export function readSeqEx(userInput : string){
 						else throw Error("Found number with multiple dots '.'")
 					}
 				}
-				return dotLocation === null ? result : result / (10*(scannerCount-dotLocation))
+				return dotLocation === null || dotLocation === scannerCount ? result : result / (10**(scannerCount-dotLocation))
 			}
 			function scanVariable(currentChar : Letter) : VariableText{
 				let result : VariableText = currentChar
@@ -284,12 +284,13 @@ export function readSeqEx(userInput : string){
 			let currentSide = left
 
 			const checkRepeater = (currentToken : {tokenType : "Digits", token : Digits}) => {
-				const nextToken = peekParse()
-				if(nextToken.tokenType === "RepeaterExpression"){
+				if(atEnd() || peekParse().tokenType !== "RepeaterExpression") 
+					currentSide.push(new DigitSeq(currentToken.token))
+				else{
+					const nextToken = peekParse() as {tokenType : "RepeaterExpression", token : ExpressionToken[]} 
 					currentSide.push(new Repeater(currentToken.token, parseRepeaterExpression(nextToken.token)))
 					advanceParse()
 				}
-				else currentSide.push(new DigitSeq(currentToken.token))
 			}
 
 			while(!atEnd()){

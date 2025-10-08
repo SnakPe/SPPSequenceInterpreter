@@ -1,5 +1,5 @@
 import { Digits, VariableText } from "../../Parsing/Parser.js";
-import { Add, Const, Div, Exp, Expression, Mult, SigmaSum, Var } from "../Expression.js";
+import { Add, Const, Div, Exp, Expression, Mult, SigmaSum, Sub, Var } from "../Expression.js";
 import { RepeaterExpression } from "../Repeater.js";
 import { SequenceExpression } from "../Sequence.js";
 
@@ -16,13 +16,13 @@ export function interpretSeqEx(seqEx : SequenceExpression, base : number = 10) :
 		if(original.type === "Addition") return new Add(toAdd, ...original.subterms)
 		return new Add(toAdd,original)
 	}
-	const digitsToNumber = (d : Digits) => d.reduce<number>((prev, curr) => 10*prev+curr, 0) 
+	const digitsToNumber = (d : Digits) => d.reduce<number>((prev, curr) => 10*prev+curr, 0)
 	for(const e of seqEx.left.slice().reverse()){
 		switch(e.type){
 			case "Digits":{
-				const cum : Expression = new Mult(new Const(digitsToNumber(e.digits)),new Exp(new Const(base),cummulativeReqEx??new Const(0)))
+				const oldCum : Expression = new Mult(new Const(digitsToNumber(e.digits)),new Exp(new Const(base),cummulativeReqEx??new Const(0)))
 				cummulativeReqEx = addIfExistsReversed<RepeaterExpression|undefined>(cummulativeReqEx, new Const(e.digits.length))
-				result = addIfExistsReversed<Expression|undefined>(result, cum)
+				result = addIfExistsReversed<Expression|undefined>(result, oldCum)
 				break
 			}
 			case "Repeater":{
@@ -30,8 +30,14 @@ export function interpretSeqEx(seqEx : SequenceExpression, base : number = 10) :
 				result = addIfExistsReversed<Expression|undefined>(result, new SigmaSum(
 					new Const(1),
 					e.repeatExpression,
-					new Mult(new Const(digitsToNumber(e.repeatee)), new Mult(new Exp(new Const(base),cummulativeReqEx ?? new Const(0)), new Exp(new Const(base), new Mult(new Const(e.repeatee.length), new Var("i")))))
-					//Sum((digits)*(10^expr*10^i))
+					//(digits)*(10^expr*10^(length*i-1))
+					new Mult(
+						new Const(digitsToNumber(e.repeatee)),
+						new Mult(
+							new Exp(new Const(base),cummulativeReqEx ?? new Const(0)), //10^expr
+							new Exp(new Const(base), new Mult(new Const(e.repeatee.length), new Sub(new Var("i"), new Const(1)))) //10^(length*i-1)
+						)
+					)
 				))
 				cummulativeReqEx = addIfExistsReversed<RepeaterExpression|undefined>(cummulativeReqEx, new Mult(new Const(e.repeatee.length),e.repeatExpression))
 				break
@@ -52,15 +58,20 @@ export function interpretSeqEx(seqEx : SequenceExpression, base : number = 10) :
 				result = addIfExists<Expression|undefined>(result, new SigmaSum(
 					new Const(1),
 					e.repeatExpression,
-					new Div(new Const(digitsToNumber(e.repeatee)), new Mult(new Exp(new Const(base),cummulativeReqEx ?? new Const(0)), new Exp(new Const(base), new Mult(new Const(e.repeatee.length), new Var("i")))))
-					//Sum((digits)/(10^expr*10^i))
+					//(digits)/(10^expr*10^(length*i))
+					new Div(
+						new Const(digitsToNumber(e.repeatee)), new Mult(new Exp(new Const(base),cummulativeReqEx ?? new Const(0)), new Exp(new Const(base), new Mult(new Const(e.repeatee.length), new Var("i")))))
+					
 				))
 				cummulativeReqEx = addIfExists<RepeaterExpression|undefined>(cummulativeReqEx, new Mult(new Const(e.repeatee.length),e.repeatExpression))
 				break
 			}
 		}
 	}
-	if(result === undefined) throw Error("Found empty Sequent")
+	if(result === undefined){
+		//Empty sequent
+		return new Const(0)
+	}
 	return result
 }
 export function assignValue(interpretation : Map<VariableText,number>, expr : Expression) : number{

@@ -1,4 +1,4 @@
-import { Digits, Letter, Operator, VariableText } from "../../Parsing/Parser.js";
+import { Digits, Letter, OperatorToken, VariableText } from "../../Parsing/Parser.js";
 import { BinaryExpression, Expression } from "../Expression.js";
 import { SequenceExpression } from "../Sequence.js";
 
@@ -32,7 +32,7 @@ export function printSequenceExpression(seqEx : SequenceExpression) : string{
 	return stringBuilder.join("")
 }
 export function printExpressionAsString(repEx : Expression) : string{
-	const printBinOP = (left : Expression, right : Expression, op : Operator) =>
+	const printBinOP = (left : Expression, right : Expression, op : OperatorToken) =>
 		`(${printExpressionAsString(left)} ${op} ${printExpressionAsString(right)})`
 	switch(repEx.type){
 		case "Variable":
@@ -140,8 +140,9 @@ export function printExpressionAsMathML(ex : Expression) : MathMLElement {
 				return exponentiationML
 			}
 			case "SigmaAddition":{
-				const indexEndTermML = helper(ex.indexEndTerm)
+				const indexEndTermML = document.createElementNS("http://www.w3.org/1998/Math/MathML","mrow")
 				indexEndTermML.classList.add("IndexEndTerm")
+				indexEndTermML.append(helper(ex.indexEndTerm))
 				const indexVarML = document.createElementNS("http://www.w3.org/1998/Math/MathML","mi")
 				indexVarML.innerHTML = "i"
 				const indexStartTermML = helper(ex.indexStartTerm)
@@ -164,8 +165,13 @@ export function printExpressionAsMathML(ex : Expression) : MathMLElement {
 					belowSigmaML,
 					indexEndTermML
 				)
+
+				const leftBracketML = document.createElementNS("http://www.w3.org/1998/Math/MathML","mo")
+				leftBracketML.innerHTML = "("
+				const rightBracketML = document.createElementNS("http://www.w3.org/1998/Math/MathML","mo")
+				rightBracketML.innerHTML = ")"
 				const combinedML = document.createElementNS("http://www.w3.org/1998/Math/MathML","mrow")
-				combinedML.append(sigmaSumLeftML,sumTermML)
+				combinedML.append(leftBracketML,sigmaSumLeftML,sumTermML,rightBracketML)
 				return combinedML
 			}
 		}
