@@ -215,21 +215,21 @@ export function readSeqEx(userInput : string){
 				return addition()
 			}
 			// type ExprConstructor = new <BoundVariables extends VariableText[] = VariableText[],Left extends RepeaterExpression<BoundVariables> = RepeaterExpression<BoundVariables>, Right extends RepeaterExpression<BoundVariables> = RepeaterExpression<BoundVariables>>(left : Left,right : Right) => RepeaterExpression
-			type ExpressionFunction = () => RepeaterExpression
+			type ExpressionFunction<E extends RepeaterExpression = RepeaterExpression> = () => E
 			function binaryOperationHelper(
-				constructor: new (left: RepeaterExpression, right: RepeaterExpression) => RepeaterExpression,
+				constructor: BinaryOperatorConstructor,
 				nextFunction: ExpressionFunction,
-				operator: Operator
+				operatorToken: OperatorToken
 			) : (() => RepeaterExpression){
 				// const [constructor, nextFunction, textRepresentation] = subs
 				return () => {
-					let left = nextFunction()
-					while(!atEnd() && peekParse() === operator){
+					let subconcepts = [nextFunction()]
+					while(!atEnd() && peekParse() === operatorToken){
 						advanceParse()
 						const right = nextFunction()
-						left = new constructor(left,right)
+						subconcepts.push(right)
 					}
-					return left
+					return subconcepts.length === 1 ? subconcepts[0] : new constructor(...subconcepts)
 				}
 			}
 			function primary() : RepeaterExpression{

@@ -14,18 +14,6 @@ const removeOuterBracketsIfExistMathML = (ml : MathMLElement) => {
 		ml.removeChild(last)
 	}
 }
-function collectSubExpressions(ex : BinaryExpression) : [Expression, ...Expression[]]{
-	const result : Expression[] = []
-	const stack = [ex.right, ex.left]
-	while(stack.length > 0){
-		const nextElement = stack.pop()!
-		if(nextElement.type === ex.type)
-			stack.push(nextElement.right,nextElement.left)
-		else 
-			result.push(nextElement)
-	}
-	return result as [Expression, ...Expression[]]
-}
 export function printSequenceExpression(seqEx : SequenceExpression) : string{
 	const stringBuilder : string[] = []
 	for(const e of seqEx){
@@ -52,7 +40,7 @@ export function printExpressionAsString(repEx : Expression) : string{
 		case "Constant":
 			return repEx.value.toString()
 		case "Negation":
-			return `-${printExpressionAsString(repEx.subExpression)}`
+			return `-${printExpressionAsString(repEx.subterm)}`
 		case "Addition":
 			return printBinOP(repEx.left,repEx.right,"+")
 		case "Subtraction":
@@ -72,7 +60,7 @@ export function printExpressionAsString(repEx : Expression) : string{
 
 export function printExpressionAsMathML(ex : Expression) : MathMLElement {
 	function helper(ex : Expression) : MathMLElement{
-		const printBinOP = (subExpressions : [Expression, ...Expression[]], op? : string, ) =>{
+		const printBinOP = (subExpressions : Expression[], op? : string, ) =>{
 			const combinedML = document.createElementNS("http://www.w3.org/1998/Math/MathML","mrow")
 			
 			const leftBracketML = document.createElementNS("http://www.w3.org/1998/Math/MathML","mo")
@@ -110,17 +98,26 @@ export function printExpressionAsMathML(ex : Expression) : MathMLElement {
 				const minusML = document.createElementNS("http://www.w3.org/1998/Math/MathML","mo")
 				minusML.innerHTML = "-"
 				const negationML = document.createElementNS("http://www.w3.org/1998/Math/MathML","mrow")
-				negationML.append(minusML,printExpressionAsMathML(ex.subExpression))
+				negationML.append(minusML)
+				if(ex.subterm.type === "Constant" || ex.subterm.type === "Variable")
+					negationML.append(printExpressionAsMathML(ex.subterm))
+				else{
+					const leftBracketML = document.createElementNS("http://www.w3.org/1998/Math/MathML","mo")
+					leftBracketML.innerHTML = "("
+					const rightBracketML = document.createElementNS("http://www.w3.org/1998/Math/MathML","mo")
+					rightBracketML.innerHTML = ")"
+					negationML.append(leftBracketML, printExpressionAsMathML(ex.subterm), rightBracketML)
+				}
 				return negationML
 			}
 			case "Addition":{
-				return printBinOP(collectSubExpressions(ex), "+", )
+				return printBinOP(ex.subterms, "+", )
 			}
 			case "Subtraction":{
-				return printBinOP(collectSubExpressions(ex), "-", )
+				return printBinOP(ex.subterms, "-", )
 			}
 			case "Multiplication":{
-				return printBinOP(collectSubExpressions(ex), "·", )
+				return printBinOP(ex.subterms, "·", )
 			}
 			case "Division":{
 				const leftML = helper(ex.left)

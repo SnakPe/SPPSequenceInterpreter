@@ -2,8 +2,8 @@ import { VariableText } from "../Parsing/Parser.js"
 import { RepeaterExpression } from "./Repeater.js"
 
 
-export type Expression<BoundVariables extends VariableText[] = VariableText[]>= Var | Const | Neg<BoundVariables> | BinaryExpression<BoundVariables> | SigmaSum<BoundVariables>
-export type BinaryExpression<BoundVariables extends VariableText[] = VariableText[]>=Add<BoundVariables> | Sub<BoundVariables> | Mult<BoundVariables> | Div<BoundVariables> | Exp<BoundVariables>
+export type Expression = Var | Const | Neg | BinaryExpression | SigmaSum
+export type BinaryExpression = Add | Sub | Mult | Div | Exp
 export type NewVar<OldVars extends VariableText[],Var extends VariableText> = 
 	OldVars extends [infer OldVar extends VariableText, ...(infer Rest extends VariableText[])] ? 
 		OldVar extends Var ? 
@@ -33,96 +33,102 @@ export class Var{
 	}
 }
 
-export class Neg<
-	BoundVariables extends VariableText[] = VariableText[],
-	SubExpression extends Expression<BoundVariables> = Expression<BoundVariables>,
->{
+export class Neg{
 	readonly type : "Negation" = "Negation"
 	constructor(
-		public subExpression : SubExpression
+		public subterm : Expression
 	){
 
 	}
 }
 
 
-export class Add<
-	BoundVariables extends VariableText[] = VariableText[],
-	Left extends Expression<BoundVariables> = Expression<BoundVariables>,
-	Right extends Expression<BoundVariables> = Expression<BoundVariables>,
->{
+type Associativity<
+	Operator extends AbstractBinaryOperator = AbstractBinaryOperator,
+> = {
+	left : (subterms : Expression[]) => Expression
+	right : (subterms : Expression[]) => Expression
+}
+function leftAssociativity<
+	Operator extends AbstractBinaryOperator["thisConstructor"] = AbstractBinaryOperator["thisConstructor"],
+>(op : Operator) : Associativity{
+	return{
+		left : (subterms) => subterms.length === 2 ? subterms[0] : op(...subterms.slice(0,-1)) as Expression,
+		right: (subterms) => subterms.at(-1)!,
+	}
+}
+function rightAssociativity<
+	Operator extends AbstractBinaryOperator = AbstractBinaryOperator,
+>(op : Operator["thisConstructor"]) : Associativity{
+	return{
+		left : (subterms) => subterms.at(0)!,
+		right: (subterms) => subterms.length === 2 ? subterms[1] : op(...subterms.slice(1)) as Expression,
+	}
+}
+
+export abstract class AbstractBinaryOperator{
+	abstract readonly type : string 
+	subterms: Expression[]
+	constructor(
+		...subterms : Expression[]
+	){
+		if(subterms.length < 2) throw Error("Binary operator needs at least two subterms")
+		this.subterms = subterms
+	}
+	abstract thisConstructor(...subs : Expression[]) : this
+	protected ass : Associativity<this> = rightAssociativity(this.thisConstructor)
+
+	get left() : Expression{
+		return this.ass.left(this.subterms)
+	}
+	get right() : Expression{
+		return this.ass.right(this.subterms)
+	}
+}
+
+
+
+export class Add extends AbstractBinaryOperator{
 	readonly type : "Addition" = "Addition"
-	constructor(
-		public left : Left,
-		public right : Right,
-	){
-
+	override thisConstructor(...subs: Expression[]): this {
+		return new Add(...subs) as this
 	}
 }
-export class Sub<
-	BoundVariables extends VariableText[] = VariableText[],
-	Left extends Expression<BoundVariables> = Expression<BoundVariables>,
-	Right extends Expression<BoundVariables> = Expression<BoundVariables>,
->{
+export class Sub extends AbstractBinaryOperator{
 	readonly type : "Subtraction" = "Subtraction"
-	constructor(
-		public left : Left,
-		public right : Right,
-	){
-
+	override thisConstructor(...subs: Expression[]): this {
+		return new Sub(...subs) as this
 	}
+	protected override ass : Associativity<Sub> = leftAssociativity(this.thisConstructor)
 }
-export class Div<
-	BoundVariables extends VariableText[] = VariableText[],
-	Left extends Expression<BoundVariables> = Expression<BoundVariables>,
-	Right extends Expression<BoundVariables> = Expression<BoundVariables>,
->{
+export class Div extends AbstractBinaryOperator{
 	readonly type : "Division" = "Division"
-	constructor(
-		public left : Left,
-		public right : Right,
-	){
-
+	override thisConstructor(...subs: Expression[]): this {
+		return new Div(...subs) as this
 	}
 }
-export class Mult<
-	BoundVariables extends VariableText[] = VariableText[],
-	Left extends Expression<BoundVariables> = Expression<BoundVariables>,
-	Right extends Expression<BoundVariables> = Expression<BoundVariables>,
-	>{
+export class Mult extends AbstractBinaryOperator{
 	readonly type : "Multiplication" = "Multiplication"
-	constructor(
-		public left : Left,
-		public right : Right,
-	){
-
+	override thisConstructor(...subs: Expression[]) : this {
+		return new Mult(...subs) as this
 	}
 }
-export class Exp<
-	BoundVariables extends VariableText[] = VariableText[], 
-	Left extends Expression<BoundVariables> = Expression<BoundVariables>, 
-	Right extends Expression<BoundVariables> = Expression<BoundVariables>,
->{
+export class Exp extends AbstractBinaryOperator{
 	readonly type : "Exponentiation" = "Exponentiation"
-	constructor(
-		public left : Left,
-		public right : Right,
-	){
-
+	override thisConstructor(...subs: Expression[]): this {
+		return new Exp(...subs) as this
 	}
 }
 
-export class SigmaSum<
-	BoundVariables extends VariableText[] = VariableText[],
-	// IndexVariable extends VariableText = VariableText,
->{
+export class SigmaSum{
 	readonly type : "SigmaAddition" = "SigmaAddition"
 
 	constructor(
-		public indexStartTerm : RepeaterExpression<BoundVariables>,
-		public indexEndTerm : RepeaterExpression<BoundVariables>,
-		public sumTerm : RepeaterExpression<BoundVariables>,
+		public indexStartTerm : RepeaterExpression,
+		public indexEndTerm : RepeaterExpression,
+		public sumTerm : RepeaterExpression,
 	){
 
 	}
 }
+export type BinaryOperatorConstructor = typeof Add | typeof Mult | typeof Sub | typeof Div | typeof Exp

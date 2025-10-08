@@ -7,10 +7,14 @@ export function interpretSeqEx(seqEx : SequenceExpression, base : number = 10) :
 	let cummulativeReqEx : RepeaterExpression|undefined = undefined
 	let result : Expression|undefined = undefined
 	function addIfExists<E extends Expression|undefined>(original : E, toAdd : Exclude<E,undefined>) : Add | Exclude<E,undefined>{
-		return original === undefined ? toAdd : new Add(original,toAdd)
+		if(original === undefined) return toAdd 
+		if(original.type === "Addition") return new Add(...original.subterms, toAdd)
+		return new Add(original,toAdd)
 	}
 	function addIfExistsReversed<E extends Expression|undefined>(original : E, toAdd : Exclude<E,undefined>) : Add | Exclude<E,undefined>{
-		return original === undefined ? toAdd : new Add(toAdd,original)
+		if(original === undefined) return toAdd 
+		if(original.type === "Addition") return new Add(toAdd, ...original.subterms)
+		return new Add(toAdd,original)
 	}
 	const digitsToNumber = (d : Digits) => d.reduce<number>((prev, curr) => 10*prev+curr, 0) 
 	for(const e of seqEx.left.slice().reverse()){
@@ -60,41 +64,39 @@ export function interpretSeqEx(seqEx : SequenceExpression, base : number = 10) :
 	return result
 }
 export function assignValue(interpretation : Map<VariableText,number>, expr : Expression) : number{
+	function binTypeToOperator(binType : "Addition" | "Subtraction" | "Multiplication" | "Division" | "Exponentiation"){
+		return (acc : number,cur : number) => {
+			switch(binType){
+				case "Addition":
+					return acc + cur
+				case "Subtraction":
+					return acc - cur
+				case "Multiplication":
+					return acc * cur
+				case "Division":
+					return acc / cur
+				case "Exponentiation":
+					return acc ** cur
+			}
+		}
+	}
 	switch (expr.type) {
 		case "Variable":{
 			if(!interpretation.has(expr.name))throw Error(`Found variable ${expr.name} in expression, but not in interpretation`)
 			return interpretation.get(expr.name)!
-			break
 		}
 		case "Constant":{
 			return expr.value
-			break
 		}
 		case "Negation":{
-			return -assignValue(interpretation, expr.subExpression)
+			return -assignValue(interpretation, expr.subterm)
 		}
-		case "Addition":{
-			return assignValue(interpretation,expr.left) + assignValue(interpretation,expr.right)
-			break
-		}
-		case "Subtraction":{
-			return assignValue(interpretation,expr.left) - assignValue(interpretation,expr.right)
-			
-			break
-		}
-		case "Multiplication":{
-			return assignValue(interpretation,expr.left) * assignValue(interpretation,expr.right)
-			
-			break
-		}
-		case "Division":{
-			return (assignValue(interpretation,expr.left) / assignValue(interpretation,expr.right))
-			
-			break
-		}
+		case "Addition":
+		case "Subtraction":
+		case "Multiplication":
+		case "Division":
 		case "Exponentiation":{
-			return assignValue(interpretation,expr.left) ** assignValue(interpretation,expr.right)
-			break
+			return expr.subterms.map(sub => assignValue(interpretation,sub)).reduce(binTypeToOperator(expr.type))
 		}
 		case "SigmaAddition":{
 			let sum = 0

@@ -5,8 +5,8 @@ export type RepeaterExpression<BoundVariables extends VariableText[] = []> =
 	| Var	
 	| Const
 	| Neg
-	| Add<BoundVariables>
-	| Sub<BoundVariables>
-	| Mult<BoundVariables>
-	| Div<BoundVariables>
-	| Exp<BoundVariables>
+	| Add
+	| Sub
+	| Mult
+	| Div
+	| Exp

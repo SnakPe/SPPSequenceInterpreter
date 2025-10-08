@@ -38,7 +38,7 @@ export class Repeater{
 }
 
 
-export type Sequence<BoundVariables extends VariableText[] = []> = Expression<BoundVariables>
+export type Sequence<BoundVariables extends VariableText[] = []> = Expression
 
 
 
