@@ -47,9 +47,8 @@ main > *{
 	overflow-x: auto;
 }
 
-mrow{
-	display: math;
-}
+
+
 input, button{
 	/* border-radius: 10px; */
 	padding: 5px;
@@ -68,11 +67,7 @@ input:focus-visible{
 	display: inline-block;
 }
 
-.Error{
-	color: red;
-}
-
-.IndexEndTerm{
-	position: relative;
-	top: -5px;
+#VariableEvaluator{
+	display: grid;
+	grid-template-columns: 1fr 2fr;
 }

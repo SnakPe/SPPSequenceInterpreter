@@ -3,9 +3,9 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<script src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js" defer></script>
 	<title>SPP</title>
 	<link rel="stylesheet" href="css/style.css">
+	<link rel="stylesheet" href="css/math.css">
 	<script src="build/bundle.js"></script>
 </head>
 <body>
@@ -15,18 +15,37 @@
 			<div class="inputBorder">
 				<input id="SequenceInput" value="0.9_[n]">
 			</div>
-			<!-- <div class="inputBorder">
-				<button id="SequenceInputButton">Read</button>
-			</div> -->
 		</div>
 		<div>
 			Read Input as: 
-			<div id="ParserOutput">
-			</div>
+			<math id="ParserOutput">
+			</math>
 		</div>
 		<div>
-			Results in :
-			<div id="SequenceOutput">
+			Results in:
+			<math id="SequenceOutput">
+			</math>
+		</div>
+		<div>
+			Simplifies to:
+			<math id="SimplifierOutput">
+			</math>
+		</div>
+		<div>
+			Set Variables and Evaluate:
+			<div id="VariableEvaluator">
+				<div>
+					Variables:        
+					<div id="VariableAssigner">
+						
+					</div>
+					
+				</div>
+				<div>
+					Results:
+					<div id="ValueOutput">
+					</div>
+				</div>
 			</div>
 		</div>
 	</main>
