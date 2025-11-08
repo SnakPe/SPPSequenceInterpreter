@@ -102,11 +102,15 @@ export function simplifyExpression<E extends Expression>(ex : E) : Expression{
 			const endTerm = simplifyExpression(ex.indexEndTerm) as RepeaterExpression
 			const sumTerm = simplifyExpression(ex.sumTerm) as RepeaterExpression
 
+			
+			if(sumTerm.type === "Constant")
+				return simplifyExpression(new Mult(endTerm, sumTerm))
+			
 			const varsInSumTerm = collectVariablesFromExpression(sumTerm)
-
-			if(startTerm.type !== "Constant" || endTerm.type !== "Constant" || (varsInSumTerm.size === 1 && !varsInSumTerm.has("i") || varsInSumTerm.size > 1))
+			if(startTerm.type !== "Constant" || endTerm.type !== "Constant" || varsInSumTerm.size > 0)
 				return new SigmaSum(startTerm, endTerm, sumTerm)
 			
+
 			let sum = 0
 			for(let i = startTerm.value; i <= endTerm.value; i++)
 				sum += assignValue(new Map([["i",i]]), sumTerm)

@@ -932,8 +932,10 @@ function simplifyExpression(ex) {
             const startTerm = simplifyExpression(ex.indexStartTerm);
             const endTerm = simplifyExpression(ex.indexEndTerm);
             const sumTerm = simplifyExpression(ex.sumTerm);
+            if (sumTerm.type === "Constant")
+                return simplifyExpression(new Mult$1(endTerm, sumTerm));
             const varsInSumTerm = collectVariablesFromExpression(sumTerm);
-            if (startTerm.type !== "Constant" || endTerm.type !== "Constant" || (varsInSumTerm.size === 1 && !varsInSumTerm.has("i") || varsInSumTerm.size > 1))
+            if (startTerm.type !== "Constant" || endTerm.type !== "Constant" || varsInSumTerm.size > 0)
                 return new SigmaSum(startTerm, endTerm, sumTerm);
             let sum = 0;
             for (let i = startTerm.value; i <= endTerm.value; i++)
