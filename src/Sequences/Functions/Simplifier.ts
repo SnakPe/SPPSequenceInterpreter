@@ -32,7 +32,7 @@ export function simplifyExpression<E extends Expression>(ex : E) : Expression{
 
 		const constantPart = new Const(constants.reduce(op,neutralElement))
 		if(nonconstants.length === 0) return constantPart
-		if(constantPart.value === neutralElement){ 
+		if(constantPart.value.isEqual(neutralElement)){ 
 			if(nonconstants.length === 1) return nonconstants[0]
 			return new AssBinOp(...nonconstants)
 		}
