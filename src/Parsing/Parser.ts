@@ -1,3 +1,4 @@
+import { MonsterFloat } from "monsterfloat"
 import { Const, Var, Sub, Exp, Mult, Div, Add, Neg, BinaryOperatorConstructor } from "../Sequences/Expression.js"
 import { RepeaterExpression } from "../Sequences/Repeater.js"
 import { SequenceExpression, Repeater, DigitSeq } from "../Sequences/Sequence.js"
@@ -240,7 +241,7 @@ export function readSeqEx(userInput : string){
 					return expr
 				}
 				else if(typeof tok === "number"){
-					return new Const(tok)
+					return new Const(MonsterFloat.from(tok))
 				}
 				else if(isVariable(tok)){
 					return new Var(tok)

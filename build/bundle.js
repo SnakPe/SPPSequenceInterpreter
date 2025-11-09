@@ -1,24 +1,8 @@
+
 function splitByFilter(arr, filter) {
     return arr.reduce(([l1, l2], cur) => filter(cur) ? [l1.concat(cur), l2] : [l1, l2.concat(cur)], [[], []]);
 }
 
-let SequenceExpression$1 = class SequenceExpression {
-    left;
-    right;
-    constructor(left, right) {
-        this.left = left;
-        this.right = right;
-    }
-};
-;
-let Repeater$1 = class Repeater {
-    repeatee;
-    repeatExpression;
-    constructor(repeatee, repeatExpression) {
-        this.repeatee = repeatee;
-        this.repeatExpression = repeatExpression;
-    }
-};
 let Const$2 = class Const {
     value;
     type = "Constant";
@@ -27,79 +11,6 @@ let Const$2 = class Const {
     }
 };
 let Var$2 = class Var {
-    name;
-    type = "Variable";
-    constructor(name) {
-        this.name = name;
-    }
-};
-let SigmaSum$1 = class SigmaSum {
-    indexVar;
-    indexStart;
-    indexEnd;
-    expr;
-    type = "SigmaAddition";
-    constructor(indexVar, indexStart, indexEnd, expr) {
-        this.indexVar = indexVar;
-        this.indexStart = indexStart;
-        this.indexEnd = indexEnd;
-        this.expr = expr;
-    }
-};
-let Add$2 = class Add {
-    left;
-    right;
-    type = "Addition";
-    constructor(left, right) {
-        this.left = left;
-        this.right = right;
-    }
-};
-let Sub$2 = class Sub {
-    left;
-    right;
-    type = "Subtraction";
-    constructor(left, right) {
-        this.left = left;
-        this.right = right;
-    }
-};
-let Div$2 = class Div {
-    numerator;
-    denominator;
-    type = "Division";
-    constructor(numerator, denominator) {
-        this.numerator = numerator;
-        this.denominator = denominator;
-    }
-};
-let Mult$2 = class Mult {
-    numerator;
-    denominator;
-    type = "Multiplication";
-    constructor(numerator, denominator) {
-        this.numerator = numerator;
-        this.denominator = denominator;
-    }
-};
-let Exp$2 = class Exp {
-    base;
-    exponent;
-    type = "Exponentiation";
-    constructor(base, exponent) {
-        this.base = base;
-        this.exponent = exponent;
-    }
-};
-
-let Const$1 = class Const {
-    value;
-    type = "Constant";
-    constructor(value) {
-        this.value = value;
-    }
-};
-let Var$1 = class Var {
     name;
     type = "Variable";
     constructor(name) {
@@ -140,38 +51,38 @@ class AbstractBinaryOperator {
         return this.ass.right(this.subterms);
     }
 }
-let Add$1 = class Add extends AbstractBinaryOperator {
+let Add$2 = class Add extends AbstractBinaryOperator {
     type = "Addition";
     thisConstructor(...subs) {
         return new Add(...subs);
     }
 };
-let Sub$1 = class Sub extends AbstractBinaryOperator {
+let Sub$2 = class Sub extends AbstractBinaryOperator {
     type = "Subtraction";
     thisConstructor(...subs) {
         return new Sub(...subs);
     }
     ass = leftAssociativity(this.thisConstructor);
 };
-let Div$1 = class Div extends AbstractBinaryOperator {
+let Div$2 = class Div extends AbstractBinaryOperator {
     type = "Division";
     thisConstructor(...subs) {
         return new Div(...subs);
     }
 };
-let Mult$1 = class Mult extends AbstractBinaryOperator {
+let Mult$2 = class Mult extends AbstractBinaryOperator {
     type = "Multiplication";
     thisConstructor(...subs) {
         return new Mult(...subs);
     }
 };
-let Exp$1 = class Exp extends AbstractBinaryOperator {
+let Exp$2 = class Exp extends AbstractBinaryOperator {
     type = "Exponentiation";
     thisConstructor(...subs) {
         return new Exp(...subs);
     }
 };
-class SigmaSum {
+let SigmaSum$1 = class SigmaSum {
     indexStartTerm;
     indexEndTerm;
     sumTerm;
@@ -181,9 +92,9 @@ class SigmaSum {
         this.indexEndTerm = indexEndTerm;
         this.sumTerm = sumTerm;
     }
-}
+};
 
-class SequenceExpression {
+let SequenceExpression$1 = class SequenceExpression {
     left;
     right;
     constructor(left, right) {
@@ -198,7 +109,7 @@ class SequenceExpression {
         for (const e of this.right)
             yield e;
     }
-}
+};
 ;
 class DigitSeq {
     digits;
@@ -207,7 +118,7 @@ class DigitSeq {
         this.digits = digits;
     }
 }
-class Repeater {
+let Repeater$1 = class Repeater {
     repeatee;
     repeatExpression;
     type = "Repeater";
@@ -215,7 +126,7 @@ class Repeater {
         this.repeatee = repeatee;
         this.repeatExpression = repeatExpression;
     }
-}
+};
 
 // type SeqTokens = IntegerSeqTokens | DecimalSeqTokens
 // type IntegerSeqTokens = [...RepeatersOrDigits]
@@ -404,10 +315,10 @@ function readSeqEx(userInput) {
                     return expr;
                 }
                 else if (typeof tok === "number") {
-                    return new Const$1(tok);
+                    return new Const$2(MonsterFloat.from(tok));
                 }
                 else if (isVariable(tok)) {
-                    return new Var$1(tok);
+                    return new Var$2(tok);
                 }
                 else
                     throw new Error(`Found operator '${tok}' without left hand side`);
@@ -420,11 +331,11 @@ function readSeqEx(userInput) {
                 }
                 return primary();
             }
-            const exponentiation = binaryOperationHelper(Exp$1, negation, "^");
-            const multiplication = binaryOperationHelper(Mult$1, exponentiation, "*");
-            const division = binaryOperationHelper(Div$1, multiplication, "/");
-            const subtraction = binaryOperationHelper(Sub$1, division, "-");
-            const addition = binaryOperationHelper(Add$1, subtraction, "+");
+            const exponentiation = binaryOperationHelper(Exp$2, negation, "^");
+            const multiplication = binaryOperationHelper(Mult$2, exponentiation, "*");
+            const division = binaryOperationHelper(Div$2, multiplication, "/");
+            const subtraction = binaryOperationHelper(Sub$2, division, "-");
+            const addition = binaryOperationHelper(Add$2, subtraction, "+");
             const repEx = repeaterExpression();
             if (!atEnd())
                 throw Error(`Could not parse entire expression. '${tokens.slice(parserCount).map(t => t.toString()).reduce((old, cur) => old.concat(cur))}' left`);
@@ -450,7 +361,7 @@ function readSeqEx(userInput) {
                     currentSide.push(new DigitSeq(currentToken.token));
                 else {
                     const nextToken = peekParse();
-                    currentSide.push(new Repeater(currentToken.token, parseRepeaterExpression(nextToken.token)));
+                    currentSide.push(new Repeater$1(currentToken.token, parseRepeaterExpression(nextToken.token)));
                     advanceParse();
                 }
             };
@@ -486,7 +397,7 @@ function readSeqEx(userInput) {
                     case ")": throw Error("Found closing bracket without opening bracket");
                 }
             }
-            return new SequenceExpression(left, right);
+            return new SequenceExpression$1(left, right);
         }
         return parseSequenceExpression(tokens);
     }
@@ -526,13 +437,13 @@ function printExpressionAsString(repEx) {
         case "Variable":
             return repEx.name;
         case "Constant":
-            return repEx.value.toString();
+            return repEx.value.toNumberString();
         case "Negation":
             return `-${printExpressionAsString(repEx.subterm)}`;
         case "Addition":
             return printBinOP(repEx.left, repEx.right, "+");
         case "Subtraction":
-            if (repEx.left.type === "Constant" && repEx.left.value === 0)
+            if (repEx.left.type === "Constant" && repEx.left.value.isEqual(0))
                 return `(-${printExpressionAsString(repEx.right)})`;
             return printBinOP(repEx.left, repEx.right, "-");
         case "Multiplication":
@@ -573,7 +484,7 @@ function printExpressionAsMathML(ex) {
             }
             case "Constant": {
                 const constML = document.createElementNS("http://www.w3.org/1998/Math/MathML", "mn");
-                constML.innerHTML = ex.value.toString();
+                constML.innerHTML = ex.value.toNumberString();
                 return constML;
             }
             case "Negation": {
@@ -679,44 +590,45 @@ function printSequenceExpressionAsMathML(seqEx) {
     }
     return result;
 }
-const letterToMathItalic = (letters) => {
-    return String.fromCharCode(...letters.split("").map(letter => letter.charCodeAt(0)));
-};
 
-function interpretSeqEx(seqEx, base = 10) {
+function interpretSeqEx(seqEx, base = new MonsterFloat(10n, 1n)) {
     let cummulativeReqEx = undefined;
     let result = undefined;
     function addIfExists(original, toAdd) {
         if (original === undefined)
             return toAdd;
         if (original.type === "Addition")
-            return new Add$1(...original.subterms, toAdd);
-        return new Add$1(original, toAdd);
+            return new Add$2(...original.subterms, toAdd);
+        return new Add$2(original, toAdd);
     }
     function addIfExistsReversed(original, toAdd) {
         if (original === undefined)
             return toAdd;
         if (original.type === "Addition")
-            return new Add$1(toAdd, ...original.subterms);
-        return new Add$1(toAdd, original);
+            return new Add$2(toAdd, ...original.subterms);
+        return new Add$2(toAdd, original);
     }
-    const digitsToNumber = (d) => d.reduce((prev, curr) => 10 * prev + curr, 0);
+    const digitsToMonsterFloat = (d) => MonsterFloat.from(d.reduce((prev, curr) => 10 * prev + curr, 0));
+    const zero = new Const$2(new MonsterFloat(0n, 1n));
+    const one = new Const$2(new MonsterFloat(1n, 1n));
     for (const e of seqEx.left.slice().reverse()) {
         switch (e.type) {
             case "Digits": {
-                const oldCum = new Mult$1(new Const$1(digitsToNumber(e.digits)), new Exp$1(new Const$1(base), cummulativeReqEx ?? new Const$1(0)));
-                cummulativeReqEx = addIfExistsReversed(cummulativeReqEx, new Const$1(e.digits.length));
+                const eLength = MonsterFloat.from(e.digits.length);
+                const oldCum = new Mult$2(new Const$2(digitsToMonsterFloat(e.digits)), new Exp$2(new Const$2(base), cummulativeReqEx ?? zero));
+                cummulativeReqEx = addIfExistsReversed(cummulativeReqEx, new Const$2(eLength));
                 result = addIfExistsReversed(result, oldCum);
                 break;
             }
             case "Repeater": {
+                const eLength = MonsterFloat.from(e.repeatee.length);
                 // cummulativeReqEx = addIfExistsReversed<RepeaterExpression|undefined>(cummulativeReqEx,new Const(e.repeatee.length-1))
-                result = addIfExistsReversed(result, new SigmaSum(new Const$1(1), e.repeatExpression, 
+                result = addIfExistsReversed(result, new SigmaSum$1(one, e.repeatExpression, 
                 //(digits)*(10^expr*10^(length*i-1))
-                new Mult$1(new Const$1(digitsToNumber(e.repeatee)), new Mult$1(new Exp$1(new Const$1(base), cummulativeReqEx ?? new Const$1(0)), //10^expr
-                new Exp$1(new Const$1(base), new Mult$1(new Const$1(e.repeatee.length), new Sub$1(new Var$1("i"), new Const$1(1)))) //10^(length*i-1)
+                new Mult$2(new Const$2(digitsToMonsterFloat(e.repeatee)), new Mult$2(new Exp$2(new Const$2(base), cummulativeReqEx ?? zero), //10^expr
+                new Exp$2(new Const$2(base), new Mult$2(new Const$2(eLength), new Sub$2(new Var$2("i"), one))) //10^(length*i-1)
                 ))));
-                cummulativeReqEx = addIfExistsReversed(cummulativeReqEx, new Mult$1(new Const$1(e.repeatee.length), e.repeatExpression));
+                cummulativeReqEx = addIfExistsReversed(cummulativeReqEx, new Mult$2(new Const$2(eLength), e.repeatExpression));
                 break;
             }
         }
@@ -726,23 +638,25 @@ function interpretSeqEx(seqEx, base = 10) {
     for (const e of seqEx.right) {
         switch (e.type) {
             case "Digits": {
-                cummulativeReqEx = addIfExists(cummulativeReqEx, new Const$1(e.digits.length));
-                result = addIfExists(result, new Div$1(new Const$1(digitsToNumber(e.digits)), new Exp$1(new Const$1(base), cummulativeReqEx)));
+                const eLength = MonsterFloat.from(e.digits.length);
+                cummulativeReqEx = addIfExists(cummulativeReqEx, new Const$2(eLength));
+                result = addIfExists(result, new Div$2(new Const$2(digitsToMonsterFloat(e.digits)), new Exp$2(new Const$2(base), cummulativeReqEx)));
                 break;
             }
             case "Repeater": {
+                const eLength = MonsterFloat.from(e.repeatee.length);
                 // cummulativeReqEx = addIfExists<RepeaterExpression|undefined>(cummulativeReqEx,new Const(e.repeatee.length-1))
-                result = addIfExists(result, new SigmaSum(new Const$1(1), e.repeatExpression, 
+                result = addIfExists(result, new SigmaSum$1(one, e.repeatExpression, 
                 //(digits)/(10^expr*10^(length*i))
-                new Div$1(new Const$1(digitsToNumber(e.repeatee)), new Mult$1(new Exp$1(new Const$1(base), cummulativeReqEx ?? new Const$1(0)), new Exp$1(new Const$1(base), new Mult$1(new Const$1(e.repeatee.length), new Var$1("i")))))));
-                cummulativeReqEx = addIfExists(cummulativeReqEx, new Mult$1(new Const$1(e.repeatee.length), e.repeatExpression));
+                new Div$2(new Const$2(digitsToMonsterFloat(e.repeatee)), new Mult$2(new Exp$2(new Const$2(base), cummulativeReqEx ?? zero), new Exp$2(new Const$2(base), new Mult$2(new Const$2(eLength), new Var$2("i")))))));
+                cummulativeReqEx = addIfExists(cummulativeReqEx, new Mult$2(new Const$2(eLength), e.repeatExpression));
                 break;
             }
         }
     }
     if (result === undefined) {
         //Empty sequent
-        return new Const$1(0);
+        return zero;
     }
     return result;
 }
@@ -751,15 +665,15 @@ function assignValue(interpretation, expr) {
         return (acc, cur) => {
             switch (binType) {
                 case "Addition":
-                    return acc + cur;
+                    return acc.a(cur);
                 case "Subtraction":
-                    return acc - cur;
+                    return acc.s(cur);
                 case "Multiplication":
-                    return acc * cur;
+                    return acc.m(cur);
                 case "Division":
-                    return acc / cur;
+                    return acc.d(cur);
                 case "Exponentiation":
-                    return acc ** cur;
+                    return acc.p(cur);
             }
         };
     }
@@ -773,7 +687,7 @@ function assignValue(interpretation, expr) {
             return expr.value;
         }
         case "Negation": {
-            return -assignValue(interpretation, expr.subterm);
+            return assignValue(interpretation, expr.subterm).multiply(-1);
         }
         case "Addition":
         case "Subtraction":
@@ -783,12 +697,13 @@ function assignValue(interpretation, expr) {
             return expr.subterms.map(sub => assignValue(interpretation, sub)).reduce(binTypeToOperator(expr.type));
         }
         case "SigmaAddition": {
-            let sum = 0;
+            let sum = new MonsterFloat(0n, 1n);
             const endTerm = assignValue(interpretation, expr.indexEndTerm);
             const startTerm = assignValue(interpretation, expr.indexStartTerm);
-            for (let i = startTerm; i <= endTerm; i++) {
+            const one = new MonsterFloat(1n, 1n);
+            for (let i = startTerm; i.isLessThanOrEqual(endTerm); i = i.add(one)) {
                 interpretation.set("i", i);
-                sum += assignValue(interpretation, expr.sumTerm);
+                sum = sum.a(assignValue(interpretation, expr.sumTerm));
             }
             // interpretation.delete("i")
             return sum;
@@ -835,19 +750,19 @@ function simplifyExpression(ex) {
         let op;
         switch (ex.type) {
             case "Addition":
-                neutralElement = 0;
-                AssBinOp = Add$1;
-                op = (a, c) => a + c.value;
+                neutralElement = new MonsterFloat(0n, 1n);
+                AssBinOp = Add$2;
+                op = (a, c) => a.a(c.value);
                 break;
             case "Multiplication":
-                neutralElement = 1;
-                AssBinOp = Mult$1;
-                op = (a, c) => a * c.value;
+                neutralElement = new MonsterFloat(1n, 1n);
+                AssBinOp = Mult$2;
+                op = (a, c) => a.m(c.value);
         }
         const simplifiedSubterms = ex.subterms.map(subEx => simplifyExpression(subEx));
         // const [constants,nonconstants] = simplifiedSubterms.reduce<[Const[],Expression[]]>(([consts,nonconsts], cur) => cur.type === "Constant" ? [consts.concat(cur),nonconsts] : [consts,nonconsts.concat(cur)],[[],[]])
         const [constants, nonconstants] = splitByFilter(simplifiedSubterms, (sub) => sub.type === "Constant");
-        const constantPart = new Const$1(constants.reduce(op, neutralElement));
+        const constantPart = new Const$2(constants.reduce(op, neutralElement));
         if (nonconstants.length === 0)
             return constantPart;
         if (constantPart.value === neutralElement) {
@@ -855,7 +770,7 @@ function simplifyExpression(ex) {
                 return nonconstants[0];
             return new AssBinOp(...nonconstants);
         }
-        if (ex.type === "Multiplication" && constantPart.value === 0) {
+        if (ex.type === "Multiplication" && constantPart.value.isEqual(0)) {
             return constantPart;
         }
         return new AssBinOp(constantPart, ...nonconstants);
@@ -868,7 +783,7 @@ function simplifyExpression(ex) {
         case "Negation": {
             const sub = simplifyExpression(ex.subterm);
             if (sub.type === "Constant")
-                return new Const$1(-sub.value);
+                return new Const$2(sub.value.multiply(-1));
             if (sub.type === "Negation")
                 return sub.subterm;
             return new Neg(sub);
@@ -887,45 +802,45 @@ function simplifyExpression(ex) {
             // a-b-...-z = a+(-b)+...+(-z)
             const firstSub = simplifyExpression(ex.subterms[0]);
             const [negatedConstants, negatedNonconstants] = splitByFilter(ex.subterms.slice(1).map(sub => simplifyExpression(new Neg(sub))), (t) => t.type === "Constant");
-            const constantPart = new Const$1(negatedConstants.reduce((acc, cur) => acc + cur.value, 0));
+            let constantPart = new Const$2(negatedConstants.reduce((acc, cur) => acc.a(cur.value), new MonsterFloat(0n, 1n)));
             if (firstSub.type === "Constant")
-                constantPart.value += firstSub.value;
+                constantPart = new Const$2(constantPart.value.a(firstSub.value));
             else
                 negatedNonconstants.push(firstSub);
             if (negatedNonconstants.length === 0)
                 return constantPart;
-            if (constantPart.value === 0) {
+            if (constantPart.value.isEqual(0)) {
                 if (negatedNonconstants.length === 1)
                     return negatedNonconstants[0];
-                return new Add$1(...negatedNonconstants);
+                return new Add$2(...negatedNonconstants);
             }
-            return new Add$1(constantPart, ...negatedNonconstants);
+            return new Add$2(constantPart, ...negatedNonconstants);
         }
         case "Division": {
             const l = simplifyExpression(ex.left);
             const r = simplifyExpression(ex.right);
             if (l.type === "Constant" && r.type === "Constant")
-                return new Const$1(l.value / r.value);
-            if (l.type === "Constant" && l.value === 0)
-                return new Const$1(0);
-            if (r.type === "Constant" && r.value === 1)
+                return new Const$2(l.value.d(r.value));
+            if (l.type === "Constant" && l.value.isEqual(0))
+                return new Const$2(new MonsterFloat(0n, 1n));
+            if (r.type === "Constant" && r.value.isEqual(1))
                 return l;
-            return new Div$1(l, r);
+            return new Div$2(l, r);
         }
         case "Exponentiation": {
             const l = simplifyExpression(ex.left);
             const r = simplifyExpression(ex.right);
             if (l.type === "Constant" && r.type === "Constant")
-                return new Const$1(l.value ** r.value);
-            if (l.type === "Constant" && l.value === 0)
-                return new Const$1(0);
-            if (r.type === "Constant" && r.value === 0)
-                return new Const$1(1);
-            if (r.type === "Constant" && r.value === 1)
+                return new Const$2(l.value.p(r.value));
+            if (l.type === "Constant" && l.value.isEqual(0))
+                return new Const$2(new MonsterFloat(0n, 1n));
+            if (r.type === "Constant" && r.value.isEqual(0))
+                return new Const$2(new MonsterFloat(1n, 1n));
+            if (r.type === "Constant" && r.value.isEqual(1))
                 return l;
-            if (l.type === "Constant" && l.value === 1)
-                return new Const$1(1);
-            return new Exp$1(l, r);
+            if (l.type === "Constant" && l.value.isEqual(1))
+                return new Const$2(new MonsterFloat(1n, 1n));
+            return new Exp$2(l, r);
         }
         case "SigmaAddition": {
             // the start term should always by Const(1). We simplify anyways...
@@ -933,14 +848,14 @@ function simplifyExpression(ex) {
             const endTerm = simplifyExpression(ex.indexEndTerm);
             const sumTerm = simplifyExpression(ex.sumTerm);
             if (sumTerm.type === "Constant")
-                return simplifyExpression(new Mult$1(endTerm, sumTerm));
+                return simplifyExpression(new Mult$2(endTerm, sumTerm));
             const varsInSumTerm = collectVariablesFromExpression(sumTerm);
             if (startTerm.type !== "Constant" || endTerm.type !== "Constant" || varsInSumTerm.size > 0)
-                return new SigmaSum(startTerm, endTerm, sumTerm);
-            let sum = 0;
-            for (let i = startTerm.value; i <= endTerm.value; i++)
-                sum += assignValue(new Map([["i", i]]), sumTerm);
-            return new Const$1(sum);
+                return new SigmaSum$1(startTerm, endTerm, sumTerm);
+            let sum = new MonsterFloat(0n, 1n);
+            for (let i = startTerm.value; i <= endTerm.value; i = i.a(new MonsterFloat(1n, 1n)))
+                sum = sum.a(assignValue(new Map([["i", i]]), sumTerm));
+            return new Const$2(sum);
         }
     }
 }
@@ -990,8 +905,8 @@ onload = () => {
     }
     //Variable Assignment
     const handleVarInput = (seq, varsToInputElems) => () => {
-        const interpretation = new Map(varsToInputElems.map(([val, elem]) => [val, elem.valueAsNumber]));
-        valueOutput.innerHTML = assignValue(interpretation, seq).toString();
+        const interpretation = new Map(varsToInputElems.map(([val, elem]) => [val, MonsterFloat.from(elem.valueAsNumber)]));
+        valueOutput.innerHTML = assignValue(interpretation, seq).toNumberString(999n);
     };
     const createVariableAssignmentInput = (seq) => {
         const variables = collectVariablesFromExpression(seq);
@@ -1025,6 +940,96 @@ onload = () => {
     };
     sequenceInput.onkeyup = handleSeqExInput;
     handleSeqExInput();
+};
+
+class SequenceExpression {
+    left;
+    right;
+    constructor(left, right) {
+        this.left = left;
+        this.right = right;
+    }
+}
+;
+class Repeater {
+    repeatee;
+    repeatExpression;
+    constructor(repeatee, repeatExpression) {
+        this.repeatee = repeatee;
+        this.repeatExpression = repeatExpression;
+    }
+}
+let Const$1 = class Const {
+    value;
+    type = "Constant";
+    constructor(value) {
+        this.value = value;
+    }
+};
+let Var$1 = class Var {
+    name;
+    type = "Variable";
+    constructor(name) {
+        this.name = name;
+    }
+};
+class SigmaSum {
+    indexVar;
+    indexStart;
+    indexEnd;
+    expr;
+    type = "SigmaAddition";
+    constructor(indexVar, indexStart, indexEnd, expr) {
+        this.indexVar = indexVar;
+        this.indexStart = indexStart;
+        this.indexEnd = indexEnd;
+        this.expr = expr;
+    }
+}
+let Add$1 = class Add {
+    left;
+    right;
+    type = "Addition";
+    constructor(left, right) {
+        this.left = left;
+        this.right = right;
+    }
+};
+let Sub$1 = class Sub {
+    left;
+    right;
+    type = "Subtraction";
+    constructor(left, right) {
+        this.left = left;
+        this.right = right;
+    }
+};
+let Div$1 = class Div {
+    numerator;
+    denominator;
+    type = "Division";
+    constructor(numerator, denominator) {
+        this.numerator = numerator;
+        this.denominator = denominator;
+    }
+};
+let Mult$1 = class Mult {
+    numerator;
+    denominator;
+    type = "Multiplication";
+    constructor(numerator, denominator) {
+        this.numerator = numerator;
+        this.denominator = denominator;
+    }
+};
+let Exp$1 = class Exp {
+    base;
+    exponent;
+    type = "Exponentiation";
+    constructor(base, exponent) {
+        this.base = base;
+        this.exponent = exponent;
+    }
 };
 
 class Const {

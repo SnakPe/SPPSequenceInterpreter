@@ -1,3 +1,4 @@
+import { MonsterFloat } from "monsterfloat";
 import { splitByFilter } from "../../helper.js";
 import { Add, Const, Div, Exp, Expression, Mult, Neg, SigmaSum } from "../Expression.js";
 import { RepeaterExpression } from "../Repeater.js";
@@ -9,20 +10,20 @@ import { collectVariablesFromExpression } from "./VariableCollector.js";
 export function simplifyExpression<E extends Expression>(ex : E) : Expression{
 	
 	function associativeCommutativeBinHelper(ex : Add | Mult){
-		let neutralElement : 0 | 1
+		let neutralElement : MonsterFloat
 		let AssBinOp : typeof Add | typeof Mult
-		let op : (acc : number, cur : Const) => number
+		let op : (acc : MonsterFloat, cur : Const) => MonsterFloat
 
 		switch(ex.type){
 			case "Addition":
-				neutralElement = 0
+				neutralElement = new MonsterFloat(0n,1n)
 				AssBinOp = Add
-				op = (a,c) => a+c.value
+				op = (a,c) => a.a(c.value)
 				break
 			case "Multiplication":
-				neutralElement = 1
+				neutralElement = new MonsterFloat(1n,1n)
 				AssBinOp = Mult
-				op = (a,c) => a*c.value
+				op = (a,c) => a.m(c.value)
 		}
 
 		const simplifiedSubterms = ex.subterms.map(subEx => simplifyExpression(subEx))
@@ -35,7 +36,7 @@ export function simplifyExpression<E extends Expression>(ex : E) : Expression{
 			if(nonconstants.length === 1) return nonconstants[0]
 			return new AssBinOp(...nonconstants)
 		}
-		if(ex.type === "Multiplication" && constantPart.value === 0){
+		if(ex.type === "Multiplication" && constantPart.value.isEqual(0)){
 			return constantPart
 		}
 		return new AssBinOp(constantPart,...nonconstants)
@@ -48,7 +49,7 @@ export function simplifyExpression<E extends Expression>(ex : E) : Expression{
 		}
 		case "Negation":{
 			const sub = simplifyExpression(ex.subterm)
-			if(sub.type === "Constant") return new Const(-sub.value)
+			if(sub.type === "Constant") return new Const(sub.value.multiply(-1))
 			if(sub.type === "Negation") return sub.subterm
 			return new Neg(sub)
 		}
@@ -67,11 +68,11 @@ export function simplifyExpression<E extends Expression>(ex : E) : Expression{
 			// a-b-...-z = a+(-b)+...+(-z)
 			const firstSub = simplifyExpression(ex.subterms[0])
 			const [negatedConstants, negatedNonconstants] = splitByFilter(ex.subterms.slice(1).map(sub => simplifyExpression(new Neg(sub))),(t) => t.type==="Constant")
-			const constantPart = new Const(negatedConstants.reduce((acc,cur) => acc+cur.value,0))
-			if(firstSub.type==="Constant") constantPart.value += firstSub.value
+			let constantPart = new Const(negatedConstants.reduce((acc,cur) => acc.a(cur.value),new MonsterFloat(0n,1n)))
+			if(firstSub.type==="Constant") constantPart = new Const(constantPart.value.a(firstSub.value))
 			else negatedNonconstants.push(firstSub)
 			if(negatedNonconstants.length === 0) return constantPart
-			if(constantPart.value === 0){ 
+			if(constantPart.value.isEqual(0)){ 
 				if(negatedNonconstants.length === 1) return negatedNonconstants[0]
 				return new Add(...negatedNonconstants)
 			}
@@ -81,19 +82,19 @@ export function simplifyExpression<E extends Expression>(ex : E) : Expression{
 		case "Division":{
 			const l = simplifyExpression(ex.left)
 			const r = simplifyExpression(ex.right)
-			if(l.type === "Constant" && r.type === "Constant") return new Const(l.value/r.value)
-			if(l.type === "Constant" && l.value === 0) return new Const(0)
-			if(r.type === "Constant" && r.value === 1) return l
+			if(l.type === "Constant" && r.type === "Constant") return new Const(l.value.d(r.value))
+			if(l.type === "Constant" && l.value.isEqual(0)) return new Const(new MonsterFloat(0n,1n))
+			if(r.type === "Constant" && r.value.isEqual(1)) return l
 			return new Div(l,r)
 		}
 		case "Exponentiation":{
 			const l = simplifyExpression(ex.left)
 			const r = simplifyExpression(ex.right)
-			if(l.type === "Constant" && r.type === "Constant") return new Const(l.value**r.value)
-			if(l.type === "Constant" && l.value === 0) return new Const(0)
-			if(r.type === "Constant" && r.value === 0) return new Const(1)
-			if(r.type === "Constant" && r.value === 1) return l
-			if(l.type === "Constant" && l.value === 1) return new Const(1)
+			if(l.type === "Constant" && r.type === "Constant") return new Const(l.value.p(r.value))
+			if(l.type === "Constant" && l.value.isEqual(0)) return new Const(new MonsterFloat(0n,1n))
+			if(r.type === "Constant" && r.value.isEqual(0)) return new Const(new MonsterFloat(1n,1n))
+			if(r.type === "Constant" && r.value.isEqual(1)) return l
+			if(l.type === "Constant" && l.value.isEqual(1)) return new Const(new MonsterFloat(1n,1n))
 			return new Exp(l,r)
 		}
 		case "SigmaAddition":{
@@ -111,9 +112,9 @@ export function simplifyExpression<E extends Expression>(ex : E) : Expression{
 				return new SigmaSum(startTerm, endTerm, sumTerm)
 			
 
-			let sum = 0
-			for(let i = startTerm.value; i <= endTerm.value; i++)
-				sum += assignValue(new Map([["i",i]]), sumTerm)
+			let sum = new MonsterFloat(0n,1n)
+			for(let i = startTerm.value; i <= endTerm.value; i = i.a(new MonsterFloat(1n,1n)))
+				sum = sum.a(assignValue(new Map([["i",i]]), sumTerm))
 			return new Const(sum)
 		}
 	}

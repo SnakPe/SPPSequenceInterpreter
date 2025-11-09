@@ -1,3 +1,4 @@
+import { MonsterFloat } from "monsterfloat"
 import { VariableText } from "../Parsing/Parser.js"
 import { RepeaterExpression } from "./Repeater.js"
 
@@ -17,7 +18,7 @@ export class Const{
 	readonly type : "Constant" = "Constant"
 
 	constructor(
-		public value : number
+		public readonly value : MonsterFloat
 	){
 
 	}
@@ -27,7 +28,7 @@ export class Var{
 	readonly type : "Variable" = "Variable"
 
 	constructor(
-		public name : VariableText
+		public readonly name : VariableText
 	){
 
 	}
@@ -36,7 +37,7 @@ export class Var{
 export class Neg{
 	readonly type : "Negation" = "Negation"
 	constructor(
-		public subterm : Expression
+		public readonly subterm : Expression
 	){
 
 	}
@@ -68,7 +69,7 @@ function rightAssociativity<
 
 export abstract class AbstractBinaryOperator{
 	abstract readonly type : string 
-	subterms: Expression[]
+	readonly subterms: Expression[]
 	constructor(
 		...subterms : Expression[]
 	){
@@ -76,7 +77,7 @@ export abstract class AbstractBinaryOperator{
 		this.subterms = subterms
 	}
 	abstract thisConstructor(...subs : Expression[]) : this
-	protected ass : Associativity<this> = rightAssociativity(this.thisConstructor)
+	protected readonly ass : Associativity<this> = rightAssociativity(this.thisConstructor)
 
 	get left() : Expression{
 		return this.ass.left(this.subterms)
@@ -124,9 +125,9 @@ export class SigmaSum{
 	readonly type : "SigmaAddition" = "SigmaAddition"
 
 	constructor(
-		public indexStartTerm : RepeaterExpression,
-		public indexEndTerm : RepeaterExpression,
-		public sumTerm : RepeaterExpression,
+		public readonly indexStartTerm : RepeaterExpression,
+		public readonly indexEndTerm : RepeaterExpression,
+		public readonly sumTerm : RepeaterExpression,
 	){
 
 	}

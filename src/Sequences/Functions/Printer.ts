@@ -1,5 +1,5 @@
-import { Digits, Letter, OperatorToken, VariableText } from "../../Parsing/Parser.js";
-import { BinaryExpression, Expression } from "../Expression.js";
+import { Digits, OperatorToken } from "../../Parsing/Parser.js";
+import { Expression } from "../Expression.js";
 import { SequenceExpression } from "../Sequence.js";
 
 
@@ -38,13 +38,13 @@ export function printExpressionAsString(repEx : Expression) : string{
 		case "Variable":
 			return repEx.name
 		case "Constant":
-			return repEx.value.toString()
+			return repEx.value.toNumberString()
 		case "Negation":
 			return `-${printExpressionAsString(repEx.subterm)}`
 		case "Addition":
 			return printBinOP(repEx.left,repEx.right,"+")
 		case "Subtraction":
-			if(repEx.left.type === "Constant" && repEx.left.value === 0) 
+			if(repEx.left.type === "Constant" && repEx.left.value.isEqual(0)) 
 				return `(-${printExpressionAsString(repEx.right)})`
 			return printBinOP(repEx.left,repEx.right,"-")
 		case "Multiplication":
@@ -91,7 +91,7 @@ export function printExpressionAsMathML(ex : Expression) : MathMLElement {
 			}
 			case "Constant":{
 				const constML = document.createElementNS("http://www.w3.org/1998/Math/MathML","mn")
-				constML.innerHTML = ex.value.toString()
+				constML.innerHTML = ex.value.toNumberString()
 				return constML
 			}
 			case "Negation":{
@@ -221,7 +221,4 @@ export function printSequenceExpressionAsMathML(seqEx : SequenceExpression) : Ma
 	}
 
 	return result
-}
-const letterToMathItalic = (letters : VariableText) => {
- return String.fromCharCode(...letters.split("").map(letter => letter.charCodeAt(0)))
 }

@@ -1,3 +1,4 @@
+import { MonsterFloat } from "monsterfloat"
 import { readSeqEx, VariableText } from "./Parsing/Parser.js"
 import { printExpressionAsMathML, printSequenceExpressionAsMathML } from "./Sequences/Functions/Printer.js"
 import { assignValue, interpretSeqEx } from "./Sequences/Functions/Semantics.js"
@@ -52,8 +53,8 @@ onload = () => {
 
 	//Variable Assignment
 	const handleVarInput = (seq : Sequence, varsToInputElems : [VariableText,HTMLInputElement][]) => () => {
-		const interpretation : Map<VariableText,number> = new Map(varsToInputElems.map(([val,elem]) => [val,elem.valueAsNumber]))
-		valueOutput.innerHTML = assignValue(interpretation,seq).toString()
+		const interpretation : Map<VariableText,MonsterFloat> = new Map(varsToInputElems.map(([val,elem]) => [val,MonsterFloat.from(elem.valueAsNumber)]))
+		valueOutput.innerHTML = assignValue(interpretation,seq).toNumberString(999n)
 	}
 	const createVariableAssignmentInput = (seq : Sequence) => {
 		const variables = collectVariablesFromExpression(seq)

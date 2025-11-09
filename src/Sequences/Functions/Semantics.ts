@@ -1,9 +1,10 @@
+import { MonsterFloat } from "monsterfloat";
 import { Digits, VariableText } from "../../Parsing/Parser.js";
 import { Add, Const, Div, Exp, Expression, Mult, SigmaSum, Sub, Var } from "../Expression.js";
 import { RepeaterExpression } from "../Repeater.js";
 import { SequenceExpression } from "../Sequence.js";
 
-export function interpretSeqEx(seqEx : SequenceExpression, base : number = 10) : Expression{
+export function interpretSeqEx(seqEx : SequenceExpression, base : MonsterFloat = new MonsterFloat(10n,1n)) : Expression{
 	let cummulativeReqEx : RepeaterExpression|undefined = undefined
 	let result : Expression|undefined = undefined
 	function addIfExists<E extends Expression|undefined>(original : E, toAdd : Exclude<E,undefined>) : Add | Exclude<E,undefined>{
@@ -16,30 +17,34 @@ export function interpretSeqEx(seqEx : SequenceExpression, base : number = 10) :
 		if(original.type === "Addition") return new Add(toAdd, ...original.subterms)
 		return new Add(toAdd,original)
 	}
-	const digitsToNumber = (d : Digits) => d.reduce<number>((prev, curr) => 10*prev+curr, 0)
+	const digitsToMonsterFloat = (d : Digits) => MonsterFloat.from(d.reduce<number>((prev, curr) => 10*prev+curr, 0))
+	const zero = new Const(new MonsterFloat(0n,1n))
+	const one = new Const(new MonsterFloat(1n,1n))
 	for(const e of seqEx.left.slice().reverse()){
 		switch(e.type){
 			case "Digits":{
-				const oldCum : Expression = new Mult(new Const(digitsToNumber(e.digits)),new Exp(new Const(base),cummulativeReqEx??new Const(0)))
-				cummulativeReqEx = addIfExistsReversed<RepeaterExpression|undefined>(cummulativeReqEx, new Const(e.digits.length))
+				const eLength = MonsterFloat.from(e.digits.length)
+				const oldCum : Expression = new Mult(new Const(digitsToMonsterFloat(e.digits)),new Exp(new Const(base),cummulativeReqEx??zero))
+				cummulativeReqEx = addIfExistsReversed<RepeaterExpression|undefined>(cummulativeReqEx, new Const(eLength))
 				result = addIfExistsReversed<Expression|undefined>(result, oldCum)
 				break
 			}
 			case "Repeater":{
+				const eLength = MonsterFloat.from(e.repeatee.length)
 				// cummulativeReqEx = addIfExistsReversed<RepeaterExpression|undefined>(cummulativeReqEx,new Const(e.repeatee.length-1))
 				result = addIfExistsReversed<Expression|undefined>(result, new SigmaSum(
-					new Const(1),
+					one,
 					e.repeatExpression,
 					//(digits)*(10^expr*10^(length*i-1))
 					new Mult(
-						new Const(digitsToNumber(e.repeatee)),
+						new Const(digitsToMonsterFloat(e.repeatee)),
 						new Mult(
-							new Exp(new Const(base),cummulativeReqEx ?? new Const(0)), //10^expr
-							new Exp(new Const(base), new Mult(new Const(e.repeatee.length), new Sub(new Var("i"), new Const(1)))) //10^(length*i-1)
+							new Exp(new Const(base),cummulativeReqEx ?? zero), //10^expr
+							new Exp(new Const(base), new Mult(new Const(eLength), new Sub(new Var("i"), one))) //10^(length*i-1)
 						)
 					)
 				))
-				cummulativeReqEx = addIfExistsReversed<RepeaterExpression|undefined>(cummulativeReqEx, new Mult(new Const(e.repeatee.length),e.repeatExpression))
+				cummulativeReqEx = addIfExistsReversed<RepeaterExpression|undefined>(cummulativeReqEx, new Mult(new Const(eLength),e.repeatExpression))
 				break
 			}
 		}
@@ -49,45 +54,48 @@ export function interpretSeqEx(seqEx : SequenceExpression, base : number = 10) :
 	for(const e of seqEx.right){
 		switch(e.type){
 			case "Digits":{
-				cummulativeReqEx = addIfExists<RepeaterExpression|undefined>(cummulativeReqEx, new Const(e.digits.length))
-				result = addIfExists<Expression|undefined>(result, new Div(new Const(digitsToNumber(e.digits)),new Exp(new Const(base),cummulativeReqEx)))
+				const eLength = MonsterFloat.from(e.digits.length)
+
+				cummulativeReqEx = addIfExists<RepeaterExpression|undefined>(cummulativeReqEx, new Const(eLength))
+				result = addIfExists<Expression|undefined>(result, new Div(new Const(digitsToMonsterFloat(e.digits)),new Exp(new Const(base),cummulativeReqEx)))
 				break
 			}
 			case "Repeater":{
+				const eLength = MonsterFloat.from(e.repeatee.length)
 				// cummulativeReqEx = addIfExists<RepeaterExpression|undefined>(cummulativeReqEx,new Const(e.repeatee.length-1))
 				result = addIfExists<Expression|undefined>(result, new SigmaSum(
-					new Const(1),
+					one,
 					e.repeatExpression,
 					//(digits)/(10^expr*10^(length*i))
 					new Div(
-						new Const(digitsToNumber(e.repeatee)), new Mult(new Exp(new Const(base),cummulativeReqEx ?? new Const(0)), new Exp(new Const(base), new Mult(new Const(e.repeatee.length), new Var("i")))))
+						new Const(digitsToMonsterFloat(e.repeatee)), new Mult(new Exp(new Const(base),cummulativeReqEx ?? zero), new Exp(new Const(base), new Mult(new Const(eLength), new Var("i")))))
 					
 				))
-				cummulativeReqEx = addIfExists<RepeaterExpression|undefined>(cummulativeReqEx, new Mult(new Const(e.repeatee.length),e.repeatExpression))
+				cummulativeReqEx = addIfExists<RepeaterExpression|undefined>(cummulativeReqEx, new Mult(new Const(eLength),e.repeatExpression))
 				break
 			}
 		}
 	}
 	if(result === undefined){
 		//Empty sequent
-		return new Const(0)
+		return zero
 	}
 	return result
 }
-export function assignValue(interpretation : Map<VariableText,number>, expr : Expression) : number{
+export function assignValue(interpretation : Map<VariableText,MonsterFloat>, expr : Expression) : MonsterFloat{
 	function binTypeToOperator(binType : "Addition" | "Subtraction" | "Multiplication" | "Division" | "Exponentiation"){
-		return (acc : number,cur : number) => {
+		return (acc : MonsterFloat,cur : MonsterFloat) => {
 			switch(binType){
 				case "Addition":
-					return acc + cur
+					return acc.a(cur)
 				case "Subtraction":
-					return acc - cur
+					return acc.s(cur)
 				case "Multiplication":
-					return acc * cur
+					return acc.m(cur)
 				case "Division":
-					return acc / cur
+					return acc.d(cur)
 				case "Exponentiation":
-					return acc ** cur
+					return acc.p(cur)
 			}
 		}
 	}
@@ -100,7 +108,7 @@ export function assignValue(interpretation : Map<VariableText,number>, expr : Ex
 			return expr.value
 		}
 		case "Negation":{
-			return -assignValue(interpretation, expr.subterm)
+			return assignValue(interpretation, expr.subterm).multiply(-1)
 		}
 		case "Addition":
 		case "Subtraction":
@@ -110,12 +118,13 @@ export function assignValue(interpretation : Map<VariableText,number>, expr : Ex
 			return expr.subterms.map(sub => assignValue(interpretation,sub)).reduce(binTypeToOperator(expr.type))
 		}
 		case "SigmaAddition":{
-			let sum = 0
+			let sum = new MonsterFloat(0n,1n)
 			const endTerm = assignValue(interpretation,expr.indexEndTerm)
 			const startTerm = assignValue(interpretation,expr.indexStartTerm)
-			for(let i = startTerm; i <= endTerm; i++){
+			const one = new MonsterFloat(1n,1n)
+			for(let i = startTerm; i.isLessThanOrEqual(endTerm); i = i.add(one)){
 				interpretation.set("i",i)
-				sum += assignValue(interpretation,expr.sumTerm)
+				sum = sum.a(assignValue(interpretation,expr.sumTerm))
 			}
 			// interpretation.delete("i")
 			return sum

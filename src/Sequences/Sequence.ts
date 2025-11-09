@@ -6,8 +6,8 @@ import { RepeaterExpression } from "./Repeater.js"
 
 export class SequenceExpression implements Iterable<DigitSeq|Repeater|{type : "Dot"}>{
 	constructor(
-		public left : (DigitSeq|Repeater)[],
-		public right : (DigitSeq|Repeater)[],
+		public readonly left : (DigitSeq|Repeater)[],
+		public readonly right : (DigitSeq|Repeater)[],
 	){
 
 	}
@@ -20,25 +20,25 @@ export class SequenceExpression implements Iterable<DigitSeq|Repeater|{type : "D
 };
 
 export class DigitSeq{
-	type : "Digits" = "Digits"
+	readonly type : "Digits" = "Digits"
 	constructor(
-		public digits : Digits
+		public readonly digits : Digits
 	){
 
 	}
 }
 export class Repeater{
-	type : "Repeater" = "Repeater"
+	readonly type : "Repeater" = "Repeater"
 	constructor(
-		public repeatee : Digits,
-		public repeatExpression : RepeaterExpression
+		public readonly repeatee : Digits,
+		public readonly repeatExpression : RepeaterExpression
 	){
 
 	}
 }
 
 
-export type Sequence<BoundVariables extends VariableText[] = []> = Expression
+export type Sequence = Expression
 
 
 
